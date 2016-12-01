@@ -1,0 +1,8 @@
+# npm packages
+node_modules
+
+# dist folder
+dist
+
+# temporarily ignore REST API server
+src/api
