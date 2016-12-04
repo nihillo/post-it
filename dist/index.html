@@ -5,14 +5,35 @@
 	<title>Post-it</title>
 	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 <link rel="stylesheet" href="https://code.getmdl.io/1.2.1/material.blue_grey-amber.min.css" />
+<link id="skin" rel="stylesheet" href="">
 <script defer src="https://code.getmdl.io/1.2.1/material.min.js"></script>
+<script src="scripts.js"></script>
 <body>
 	<noscript>
 		Sorry, this browser seems to not support Javascript, or have Javascript support disabled.
 	</noscript>
+	<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+		<header class="mdl-layout__header">
+			<div class="mdl-layout__header-row">
+				<!-- Title -->
+				<span class="mdl-layout-title">Post-it</span>
 
-	<button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
-  Button
-</button>
+			</div>
+		</header>
+		<div class="mdl-layout__drawer">
+			<span class="mdl-layout-title">Skin</span>
+			<nav class="mdl-navigation">
+				<a class="mdl-navigation__link" href="#">Classy</a>
+				<a class="mdl-navigation__link" href="#">Kitsch</a>
+			</nav>
+		</div>
+		<main class="mdl-layout__content">
+			<div class="page-content" id="content">
+				
+
+
+			</div>
+		</main>
+	</div>
 </body>
 </html>
