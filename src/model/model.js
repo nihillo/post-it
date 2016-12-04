@@ -31,13 +31,17 @@ export class Model {
 		var success, data, errorMessage;
 
 		try {
-			data = this.notes;
-			success = true;
+			if (this.notes) {
+				data = this.notes;
+				success = true;
+			} else {
+				throw 'Error: No notes found';
+			}
 		}
 
 		catch(err) {
 			success = false;
-			errorMessage = 'No notes found';
+			errorMessage = err.message;
 		}
 
 		return new Response(success, data, errorMessage);
@@ -47,13 +51,18 @@ export class Model {
 		var success, data, errorMessage;
 
 		try {
-			data = this.notes[id];
-			success = true;
+
+			if (this.notes[id]) {
+				data = this.notes[id];
+				success = true;
+			} else {
+				throw 'Error: Note not found';
+			}
 		}
 
 		catch(err) {
 			success = false;
-			errorMessage = 'Note not found';
+			errorMessage = err.message;
 		}
 
 		return new Response(success, data, errorMessage);
@@ -63,19 +72,23 @@ export class Model {
 		var success, data, errorMessage;
 
 		try {
-			var note = this.notes[id];
-			var now = new Date();
-				
-			if (title) {note.title = title;}
-			if (text) {note.text = text;}
-			if (order) {note.order = order;}
+			if (this.notes[id]) {
+				var note = this.notes[id];
+				var now = new Date();
+					
+				if (title) {note.title = title;}
+				if (text) {note.text = text;}
+				if (order) {note.order = order;}
 
-			if (title || text || order) {note.lastModified = now;}
+				if (title || text || order) {note.lastModified = now;}
 
-			this.save();
+				this.save();
 
-			success = true;
-			data = this.notes[id];
+				success = true;
+				data = this.notes[id];
+			} else {
+				throw 'Error: Note not found';
+			}
 		}
 
 		catch(err) {
@@ -90,10 +103,14 @@ export class Model {
 		var success, data, errorMessage;
 
 		try {
-			delete this.notes[id];
-			success = true;
+			if (this.notes[id]) {
+				delete this.notes[id];
+				success = true;
 
-			this.save();
+				this.save();
+			} else {
+				throw 'Error: Note not found';
+			}
 		}
 
 		catch(err) {
