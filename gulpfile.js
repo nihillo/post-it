@@ -53,6 +53,14 @@ gulp.task('html', function() {
 //         .pipe( browserSync.stream() );
 // });
 
+// Move templates to dist
+// gulp.task('templates', function() {
+//     // Copy all HTML files to dist folder
+//     return gulp.src('./src/view/templates/**/*')
+//         .pipe(gulp.dest('./dist/templates'))
+//         .pipe( browserSync.stream() );
+// });
+
 
 // Static server
 gulp.task('browser-sync', function() {
@@ -83,5 +91,5 @@ gulp.task('clean', function() {
 
 // Default
 gulp.task('default', function() {
-  runSequence(['clean', 'html', 'css', 'js', /*'assets',*/ 'browser-sync', 'watch']);
+  runSequence(['clean', 'html', 'css', 'js', /*'assets',*//* 'templates',*/ 'browser-sync', 'watch']);
 });

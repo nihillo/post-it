@@ -3,7 +3,11 @@ import {View} from '../view/view.js';
 
 export class Controller {
 	constructor() {
-		this.view = new View();
+		var skin = ModelConnect.userSkin;
+		var content = this.readAll().response;
+
+		this.view = new View(content, skin);
+
 	}
 
 
@@ -30,5 +34,7 @@ export class Controller {
 
 
 
-
+	bindEvents() {
+		
+	}
 }

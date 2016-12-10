@@ -49,9 +49,9 @@
 	__webpack_require__(1);
 	__webpack_require__(2);
 	__webpack_require__(3);
-	__webpack_require__(4);
-	__webpack_require__(5);
 	__webpack_require__(6);
+	__webpack_require__(7);
+	__webpack_require__(10);
 
 /***/ },
 /* 1 */
@@ -63,7 +63,7 @@
 /* 2 */
 /***/ function(module, exports) {
 
-	'use strict';
+	"use strict";
 
 	Object.defineProperty(exports, "__esModule", {
 		value: true
@@ -83,7 +83,7 @@
 		/* ENDPOINTS */
 
 		_createClass(Model, [{
-			key: 'create',
+			key: "create",
 			value: function create(title, text, order) {
 				var success, data, errorMessage;
 
@@ -102,66 +102,29 @@
 				return new Response(success, data, errorMessage);
 			}
 		}, {
-			key: 'readAll',
+			key: "readAll",
 			value: function readAll() {
 				var success, data, errorMessage;
 
 				try {
-					data = this.notes;
-					success = true;
-				} catch (err) {
-					success = false;
-					errorMessage = 'No notes found';
-				}
+					if (this.notes) {
+						data = [];
 
-				return new Response(success, data, errorMessage);
-			}
-		}, {
-			key: 'read',
-			value: function read(id) {
-				var success, data, errorMessage;
+						for (var key in this.notes) {
+							data.push({
+								"id": key,
+								"title": this.notes[key].title,
+								"text": this.notes[key].text,
+								"date": this.notes[key].date,
+								"lastModified": this.notes[key].lastModified,
+								"order": this.notes[key].order
+							});
+						}
 
-				try {
-					data = this.notes[id];
-					success = true;
-				} catch (err) {
-					success = false;
-					errorMessage = 'Note not found';
-				}
-
-				return new Response(success, data, errorMessage);
-			}
-		}, {
-			key: 'update',
-			value: function update(id) {
-				var title = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-				var text = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-				var order = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
-
-				var success, data, errorMessage;
-
-				try {
-					var note = this.notes[id];
-					var now = new Date();
-
-					if (title) {
-						note.title = title;
+						success = true;
+					} else {
+						throw 'Error: No notes found';
 					}
-					if (text) {
-						note.text = text;
-					}
-					if (order) {
-						note.order = order;
-					}
-
-					if (title || text || order) {
-						note.lastModified = now;
-					}
-
-					this.save();
-
-					success = true;
-					data = this.notes[id];
 				} catch (err) {
 					success = false;
 					errorMessage = err.message;
@@ -170,15 +133,81 @@
 				return new Response(success, data, errorMessage);
 			}
 		}, {
-			key: 'delete',
+			key: "read",
+			value: function read(id) {
+				var success, data, errorMessage;
+
+				try {
+
+					if (this.notes[id]) {
+						data = this.notes[id];
+						success = true;
+					} else {
+						throw 'Error: Note not found';
+					}
+				} catch (err) {
+					success = false;
+					errorMessage = err.message;
+				}
+
+				return new Response(success, data, errorMessage);
+			}
+		}, {
+			key: "update",
+			value: function update(id) {
+				var title = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+				var text = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+				var order = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
+
+				var success, data, errorMessage;
+
+				try {
+					if (this.notes[id]) {
+						var note = this.notes[id];
+						var now = new Date();
+
+						if (title) {
+							note.title = title;
+						}
+						if (text) {
+							note.text = text;
+						}
+						if (order) {
+							note.order = order;
+						}
+
+						if (title || text || order) {
+							note.lastModified = now;
+						}
+
+						this.save();
+
+						success = true;
+						data = this.notes[id];
+					} else {
+						throw 'Error: Note not found';
+					}
+				} catch (err) {
+					success = false;
+					errorMessage = err.message;
+				}
+
+				return new Response(success, data, errorMessage);
+			}
+		}, {
+			key: "delete",
 			value: function _delete(id) {
 				var success, data, errorMessage;
 
 				try {
-					delete this.notes[id];
-					success = true;
+					if (this.notes[id]) {
+						delete this.notes[id];
+						success = true;
 
-					this.save();
+						this.save();
+					} else {
+						throw 'Error: Note not found';
+					}
 				} catch (err) {
 					success = false;
 					errorMessage = err.message;
@@ -190,17 +219,17 @@
 			/* INTERN METHODS */
 
 		}, {
-			key: 'load',
+			key: "load",
 			value: function load() {
 				return JSON.parse(this.storage.getItem('notes'));
 			}
 		}, {
-			key: 'save',
+			key: "save",
 			value: function save() {
 				this.storage.setItem('notes', JSON.stringify(this.notes));
 			}
 		}, {
-			key: 'storage',
+			key: "storage",
 			get: function get() {
 				if (typeof Storage !== "undefined") {
 					return localStorage;
@@ -292,15 +321,18 @@
 	   	} 
 	*/
 
-	// This is a ModelConnect definition for an intern Model class.
+	// This is a ModelConnect definition for an internal Model class.
 	// In case of using a REST API, we should define static methods
 	// in another way, in order to trigger AJAX requests to API endpoints
 
 	var _model = __webpack_require__(2);
 
+	var _userPreferences = __webpack_require__(4);
+
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var MODEL = new _model.Model();
+	var PREFERENCES = new _userPreferences.UserPreferences();
 
 	var ModelConnect = exports.ModelConnect = function () {
 		function ModelConnect() {
@@ -336,6 +368,11 @@
 			value: function _delete(id) {
 				return MODEL.delete(id);
 			}
+		}, {
+			key: 'userSkin',
+			get: function get() {
+				return PREFERENCES.skin;
+			}
 		}]);
 
 		return ModelConnect;
@@ -350,13 +387,77 @@
 	Object.defineProperty(exports, "__esModule", {
 		value: true
 	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var config = __webpack_require__(5);
+
+	var UserPreferences = exports.UserPreferences = function () {
+		function UserPreferences() {
+			_classCallCheck(this, UserPreferences);
+
+			var preferences = this.load() ? this.load() : {};
+
+			this.skin = preferences.skin ? preferences.skin : config.DEFAULT_SKIN;
+		}
+
+		_createClass(UserPreferences, [{
+			key: 'load',
+			value: function load() {
+				return JSON.parse(this.storage.getItem('user-preferences'));
+			}
+		}, {
+			key: 'save',
+			value: function save() {
+				this.storage.setItem('user-preferences', JSON.stringify(this.notes));
+			}
+		}, {
+			key: 'storage',
+			get: function get() {
+				if (typeof Storage !== "undefined") {
+					return localStorage;
+				} else {
+					console.log('Error: This browser has no Local Storage support');
+				}
+			}
+		}]);
+
+		return UserPreferences;
+	}();
+
+/***/ },
+/* 5 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var testURL = 'dwec/projects/post-it/dist';
+
+	var defaultSkin = 'classy';
+
+	module.exports = {
+		URL: testURL,
+		DEFAULT_SKIN: defaultSkin
+	};
+
+/***/ },
+/* 6 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
 	exports.Controller = undefined;
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 	var _configmodel = __webpack_require__(3);
 
-	var _view = __webpack_require__(5);
+	var _view = __webpack_require__(7);
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -364,7 +465,10 @@
 		function Controller() {
 			_classCallCheck(this, Controller);
 
-			this.view = new _view.View();
+			var skin = _configmodel.ModelConnect.userSkin;
+			var content = this.readAll().response;
+
+			this.view = new _view.View(content, skin);
 		}
 
 		_createClass(Controller, [{
@@ -396,36 +500,55 @@
 			value: function _delete(id) {
 				return _configmodel.ModelConnect.delete(id);
 			}
+		}, {
+			key: 'bindEvents',
+			value: function bindEvents() {}
 		}]);
 
 		return Controller;
 	}();
 
 /***/ },
-/* 5 */
-/***/ function(module, exports) {
+/* 7 */
+/***/ function(module, exports, __webpack_require__) {
 
-	"use strict";
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+	exports.View = undefined;
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+	var _classy = __webpack_require__(8);
+
+	var _kitsch = __webpack_require__(9);
+
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	/*export */var View = function () {
-		function View(content, template, styles) {
+	var templates = {
+		'classy': _classy.html,
+		'kitsch': _kitsch.html
+	};
+
+	var View = exports.View = function () {
+		function View(content, skin) {
 			_classCallCheck(this, View);
 
 			this.content = content; // Array with json post-it objects;
-			this.template = template; // Template object which generates dom elements
-			this.styles = styles; // String with css file location
+			this.template = templates[skin]; // HTML template
 
+			this.container = document.getElementById('content');
 
 			this.drawUI();
 		}
 
 		_createClass(View, [{
-			key: "drawUI",
-			value: function drawUI() {}
+			key: 'drawUI',
+			value: function drawUI() {
+				this.container.innerHTML = Mustache.render(this.template, this.content);
+			}
 		}]);
 
 		return View;
@@ -435,16 +558,37 @@
 		_classCallCheck(this, Template);
 	};
 
-	// var viewClassy = new View();
-	// var viewKitsch = new View();
+/***/ },
+/* 8 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+	var html = exports.html = undefined;
+
+	exports.html = html = "\n{{#data}}\n\t<div id=\"post-it-{{id}}\" class=\"mdl-card mdl-shadow--2dp post-it\">\n\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t<h2 class=\"mdl-card__title-text\">{{title}}</h2>\n\t\t</div>\n\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t{{text}}\n\t\t</div>\n\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\">\n\t\t\t\t<i class=\"material-icons\">edit</i>\n\t\t\t</button>\n\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\">\n\t\t\t\t<i class=\"material-icons\">delete</i>\n\t\t\t</button>\n\t\t</div>\n\t</div>\n{{/data}}\n";
 
 /***/ },
-/* 6 */
+/* 9 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+	var html = exports.html = "\n\t<h1>{{title}}</h1>\n";
+
+/***/ },
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var _ctrl = __webpack_require__(4);
+	var _ctrl = __webpack_require__(6);
 
 	var ctrl;
 

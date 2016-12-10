@@ -31,13 +31,15 @@
 
 
 
-// This is a ModelConnect definition for an intern Model class.
+// This is a ModelConnect definition for an internal Model class.
 // In case of using a REST API, we should define static methods
 // in another way, in order to trigger AJAX requests to API endpoints
 
 import {Model} from '../model/model.js';
+import {UserPreferences} from '../model/user-preferences.js';
 
 const MODEL = new Model();
+const PREFERENCES = new UserPreferences();
 
 export class ModelConnect {
 
@@ -59,5 +61,10 @@ export class ModelConnect {
 
 	static delete(id) {
 		return MODEL.delete(id);
+	}
+
+
+	static get userSkin() {
+		return PREFERENCES.skin;
 	}
 }

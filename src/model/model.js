@@ -32,7 +32,21 @@ export class Model {
 
 		try {
 			if (this.notes) {
-				data = this.notes;
+				data = [];
+
+				for (let key in this.notes) {
+					data.push(
+						{
+							"id" : key,
+							"title": this.notes[key].title,
+							"text": this.notes[key].text,
+							"date": this.notes[key].date,
+							"lastModified": this.notes[key].lastModified,
+							"order": this.notes[key].order
+						}
+					);
+				}
+
 				success = true;
 			} else {
 				throw 'Error: No notes found';
