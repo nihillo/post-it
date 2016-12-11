@@ -6,11 +6,12 @@ export class Model {
 
 	/* ENDPOINTS */
 
-	create(title, text, order) {
+	create(title, text) {
 		var success, data, errorMessage;
 
 		try {
-			var note = new Note(title, text, order);
+			var position = this.readAll().response.data.length;
+			var note = new Note(title, text, position);
 			this.notes[note.date.getTime()] = note;
 			this.save();
 
@@ -42,7 +43,7 @@ export class Model {
 							"text": this.notes[key].text,
 							"date": this.notes[key].date,
 							"lastModified": this.notes[key].lastModified,
-							"order": this.notes[key].order
+							"position": this.notes[key].position
 						}
 					);
 				}
@@ -82,7 +83,7 @@ export class Model {
 		return new Response(success, data, errorMessage);
 	}
 
-	update(id, title = null, text = null, order = null) {
+	update(id, title = null, text = null, position = null) {
 		var success, data, errorMessage;
 
 		try {
@@ -92,9 +93,9 @@ export class Model {
 					
 				if (title) {note.title = title;}
 				if (text) {note.text = text;}
-				if (order) {note.order = order;}
+				if (position) {note.position = position;}
 
-				if (title || text || order) {note.lastModified = now;}
+				if (title || text || position) {note.lastModified = now;}
 
 				this.save();
 
@@ -158,14 +159,15 @@ export class Model {
 
 
 class Note {
-	constructor(title, text, order) {
+	constructor(title, text, position) {
 		var now = new Date();
 
+		this.id = now.getTime();
 		this.title = title;
 		this.text = text;
 		this.date = now;
 		this.lastModified = now;
-		this.order = order;
+		this.position = position;
 	}
 }
 

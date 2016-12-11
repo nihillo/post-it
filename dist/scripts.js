@@ -84,11 +84,12 @@
 
 		_createClass(Model, [{
 			key: "create",
-			value: function create(title, text, order) {
+			value: function create(title, text) {
 				var success, data, errorMessage;
 
 				try {
-					var note = new Note(title, text, order);
+					var position = this.readAll().response.data.length;
+					var note = new Note(title, text, position);
 					this.notes[note.date.getTime()] = note;
 					this.save();
 
@@ -117,7 +118,7 @@
 								"text": this.notes[key].text,
 								"date": this.notes[key].date,
 								"lastModified": this.notes[key].lastModified,
-								"order": this.notes[key].order
+								"position": this.notes[key].position
 							});
 						}
 
@@ -157,7 +158,7 @@
 			value: function update(id) {
 				var title = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 				var text = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-				var order = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
+				var position = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
 
 				var success, data, errorMessage;
 
@@ -172,11 +173,11 @@
 						if (text) {
 							note.text = text;
 						}
-						if (order) {
-							note.order = order;
+						if (position) {
+							note.position = position;
 						}
 
-						if (title || text || order) {
+						if (title || text || position) {
 							note.lastModified = now;
 						}
 
@@ -242,16 +243,17 @@
 		return Model;
 	}();
 
-	var Note = function Note(title, text, order) {
+	var Note = function Note(title, text, position) {
 		_classCallCheck(this, Note);
 
 		var now = new Date();
 
+		this.id = now.getTime();
 		this.title = title;
 		this.text = text;
 		this.date = now;
 		this.lastModified = now;
-		this.order = order;
+		this.position = position;
 	};
 
 	/* AUXILIAR CLASSES */
@@ -321,7 +323,8 @@
 	   	} 
 	*/
 
-	// This is a ModelConnect definition for an internal Model class.
+	// This is a ModelConnect definition for an internal Model class which stores
+	// notes in Local Storage.
 	// In case of using a REST API, we should define static methods
 	// in another way, in order to trigger AJAX requests to API endpoints
 
@@ -341,8 +344,8 @@
 
 		_createClass(ModelConnect, null, [{
 			key: 'create',
-			value: function create(title, text, order) {
-				return MODEL.create(title, text, order);
+			value: function create(title, text) {
+				return MODEL.create(title, text);
 			}
 		}, {
 			key: 'readAll',
@@ -500,8 +503,8 @@
 			}
 		}, {
 			key: 'create',
-			value: function create(title, text, order) {
-				return _configmodel.ModelConnect.create(title, text, order);
+			value: function create(title, text) {
+				return _configmodel.ModelConnect.create(title, text);
 			}
 		}, {
 			key: 'readAll',
@@ -518,9 +521,9 @@
 			value: function update(id) {
 				var title = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 				var text = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-				var order = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
+				var position = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
 
-				return _configmodel.ModelConnect.update(id, title, text, order);
+				return _configmodel.ModelConnect.update(id, title, text, position);
 			}
 		}, {
 			key: 'delete',
@@ -579,14 +582,16 @@
 
 				if (this.view.controls.cancel) {
 					this.view.controls.cancel.addEventListener('click', function () {
-						_this2.dismiss();
+						_this2.dismiss(_this2.state);
 					});
 				}
 			}
 		}, {
 			key: 'edit',
 			value: function edit() {
-				console.log('edit-' + this.data.id);
+				this.state = 'edit';
+				this.view.updateNote(this.data, 'edit');
+				this.bindEvents();
 			}
 		}, {
 			key: 'delete',
@@ -597,18 +602,43 @@
 		}, {
 			key: 'save',
 			value: function save() {
+
+				var prevState = JSON.parse(JSON.stringify(this.view.state));
+				console.log(prevState);
 				var title = document.getElementById('add-title-' + this.data.id);
 				var text = document.getElementById('add-text-' + this.data.id);
 
-				var savedNote = this.parentCtrl.create(title.value, text.value, 1);
-				this.data = savedNote.response.data;
+				var savedNote;
+				switch (prevState) {
+					case 'new':
+						savedNote = this.parentCtrl.create(title.value, text.value);
+						this.data = savedNote.response.data;
 
-				this.view.updateNote(this.data);
+						this.view.updateNote(this.data, 'saved');
+						break;
+					case 'edit':
+						console.log('entering save edit');
+						savedNote = this.parentCtrl.update(this.data.id, title.value, text.value);
+						this.data = savedNote.response.data;
+
+						this.view.updateNote(this.data, 'saved');
+						break;
+				}
+
+				this.bindEvents();
 			}
 		}, {
 			key: 'dismiss',
-			value: function dismiss() {
-				this.view.removeNote();
+			value: function dismiss(state) {
+				switch (state) {
+					case 'new':
+						this.view.removeNote();
+						break;
+					case 'edit':
+						this.view.updateNote(this.data, 'saved');
+						this.bindEvents();
+						break;
+				}
 			}
 		}]);
 
@@ -674,19 +704,26 @@
 
 			this.drawNote(this.state);
 
-			this.controls = {
-				edit: document.getElementById('edit-' + this.data.id),
-				delete: document.getElementById('delete-' + this.data.id),
-				ok: document.getElementById('ok-' + this.data.id),
-				cancel: document.getElementById('cancel-' + this.data.id)
-			};
+			this.controls = this.getControls();
 		}
 
 		_createClass(ViewNote, [{
+			key: 'getControls',
+			value: function getControls() {
+				return {
+					edit: document.getElementById('edit-' + this.data.id),
+					delete: document.getElementById('delete-' + this.data.id),
+					ok: document.getElementById('ok-' + this.data.id),
+					cancel: document.getElementById('cancel-' + this.data.id)
+				};
+			}
+		}, {
 			key: 'updateNote',
-			value: function updateNote(data) {
+			value: function updateNote(data, toState) {
 				this.data = data;
-				this.redrawNote('saved');
+				this.state = toState;
+				this.redrawNote(toState);
+				this.controls = this.getControls();
 			}
 		}, {
 			key: 'drawNote',
@@ -697,19 +734,19 @@
 
 				switch (state) {
 					case 'new':
-						template = this.template.edit;
+						template = this.template.new;
 						this.element = this.createDomElement(template, this.data);
 						this.insertInPlace(this.element, 'end');
 						break;
 					case 'edit':
 						template = this.template.edit;
 						this.element = this.createDomElement(template, this.data);
-						this.insertInPlace(this.element, 'self');
+						this.insertInPlace(this.element, this.data.position);
 						break;
 					case 'saved':
 						template = this.template.fixed;
 						this.element = this.createDomElement(template, this.data);
-						this.insertInPlace(this.element, 'end');
+						this.insertInPlace(this.element, this.data.position);
 						break;
 				}
 			}
@@ -739,18 +776,23 @@
 			value: function insertInPlace(element) {
 				var place = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'end';
 
-				switch (place) {
-					case 'end':
-						var add = document.getElementById('post-it-add');
+				if (place == 'end') {
+					var add = document.getElementById('post-it-add');
 
-						if (add) {
-							this.container.insertBefore(element, add);
-						} else {
-							this.container.appendChild(element);
-						}
-						break;
-					case 'self':
-						break;
+					if (add) {
+						this.container.insertBefore(element, add);
+					} else {
+						this.container.appendChild(element);
+					}
+				} else {
+					if (place < this.container.children.length) {
+
+						var next = this.container.children[place];
+
+						this.container.insertBefore(element, next);
+					} else {
+						this.insertInPlace(element, 'end');
+					}
 				}
 			}
 		}]);
@@ -769,27 +811,9 @@
 	});
 	var note = exports.note = undefined;
 
-	exports.note = note = { /*
-	                        new: `
-	                        <div id="post-it-{{id}}" class="mdl-card mdl-shadow--2dp post-it">
-	                        <div class="mdl-card__title mdl-card--expand">
-	                        <input type="text" placeholder="Add title" class="add-title" id="add-title-{{id}}"></input>
-	                        </div>
-	                        <div class="mdl-card__supporting-text">
-	                        <textarea cols="30" rows="10" placeholder="Add text" class="add-text" id="add-text-{{id}}"></textarea>
-	                        </div>
-	                        <div class="mdl-card__actions mdl-card--border">
-	                        <div class="mdl-layout-spacer"></div>
-	                        <button class="mdl-button mdl-js-button mdl-button--icon" id="ok-{{id}}">
-	                        <i class="material-icons">done</i>
-	                        </button>
-	                        <button class="mdl-button mdl-js-button mdl-button--icon" id="cancel-{{id}}">
-	                        <i class="material-icons">close</i>
-	                        </button>
-	                        </div>
-	                        </div>
-	                        `,*/
-		edit: "\n\t\t<div id=\"post-it-{{id}}\" class=\"mdl-card mdl-shadow--2dp post-it\">\n\t\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t\t<input type=\"text\" placeholder=\"Add title\" class=\"add-title\" id=\"add-title-{{id}}\"></input>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t\t<textarea cols=\"30\" rows=\"10\" placeholder=\"Add text\" class=\"add-text\" id=\"add-text-{{id}}\"></textarea>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"ok-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons\">done</i>\n\t\t\t\t</button>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"cancel-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons\">close</i>\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
+	exports.note = note = {
+		new: "\n\t\t<div id=\"post-it-{{id}}\" class=\"mdl-card mdl-shadow--8dp post-it\">\n\t\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t\t<input type=\"text\" placeholder=\"Add title\" class=\"add-title\" id=\"add-title-{{id}}\"></input>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t\t<textarea cols=\"30\" rows=\"10\" placeholder=\"Add text\" class=\"add-text\" id=\"add-text-{{id}}\"></textarea>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"ok-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons mdl-color-text--green\">done</i>\n\t\t\t\t</button>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"cancel-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons mdl-color-text--red\">close</i>\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
+		edit: "\n\t\t<div id=\"post-it-{{id}}\" class=\"mdl-card mdl-shadow--8dp post-it\">\n\t\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t\t<input type=\"text\" value=\"{{title}}\" class=\"add-title\" id=\"add-title-{{id}}\"></input>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t\t<textarea cols=\"30\" rows=\"10\" value=\"{{text}}\" class=\"add-text\" id=\"add-text-{{id}}\">{{text}}</textarea>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"ok-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons mdl-color-text--green\">done</i>\n\t\t\t\t</button>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"cancel-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons mdl-color-text--red\">close</i>\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
 		fixed: "\n\t\t<div id=\"post-it-{{id}}\" class=\"mdl-card mdl-shadow--2dp post-it\">\n\t\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t\t<h2 class=\"mdl-card__title-text\">{{title}}</h2>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t\t{{text}}\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"edit-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons\">edit</i>\n\t\t\t\t</button>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"delete-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons\">delete</i>\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
 		creator: "\n\t\t<div id=\"post-it-add\" class=\"mdl-card mdl-shadow--2dp post-it\">\n\t\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t\t<h2 class=\"mdl-card__title-text\"></h2>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t\t<div class=\"mdl-button mdl-js-button mdl-button--icon add-icon-big\">\n\t\t\t\t\t<i class=\"material-icons\">add</i>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t\t<div class=\"add-action-text\">ADD NOTE</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};

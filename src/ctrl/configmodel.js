@@ -31,7 +31,8 @@
 
 
 
-// This is a ModelConnect definition for an internal Model class.
+// This is a ModelConnect definition for an internal Model class which stores
+// notes in Local Storage.
 // In case of using a REST API, we should define static methods
 // in another way, in order to trigger AJAX requests to API endpoints
 
@@ -43,8 +44,8 @@ const PREFERENCES = new UserPreferences();
 
 export class ModelConnect {
 
-	static create(title, text, order) {
-		return MODEL.create(title, text, order);
+	static create(title, text) {
+		return MODEL.create(title, text);
 	}
 
 	static readAll() {

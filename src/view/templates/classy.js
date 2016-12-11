@@ -1,8 +1,8 @@
 export var note;
 
-note = {/*
+note = {
 	new: `
-		<div id="post-it-{{id}}" class="mdl-card mdl-shadow--2dp post-it">
+		<div id="post-it-{{id}}" class="mdl-card mdl-shadow--8dp post-it">
 			<div class="mdl-card__title mdl-card--expand">
 				<input type="text" placeholder="Add title" class="add-title" id="add-title-{{id}}"></input>
 			</div>
@@ -12,29 +12,29 @@ note = {/*
 			<div class="mdl-card__actions mdl-card--border">
 				<div class="mdl-layout-spacer"></div>
 				<button class="mdl-button mdl-js-button mdl-button--icon" id="ok-{{id}}">
-					<i class="material-icons">done</i>
+					<i class="material-icons mdl-color-text--green">done</i>
 				</button>
 				<button class="mdl-button mdl-js-button mdl-button--icon" id="cancel-{{id}}">
-					<i class="material-icons">close</i>
+					<i class="material-icons mdl-color-text--red">close</i>
 				</button>
 			</div>
 		</div>
-	`,*/
+	`,
 	edit: `
-		<div id="post-it-{{id}}" class="mdl-card mdl-shadow--2dp post-it">
+		<div id="post-it-{{id}}" class="mdl-card mdl-shadow--8dp post-it">
 			<div class="mdl-card__title mdl-card--expand">
-				<input type="text" placeholder="Add title" class="add-title" id="add-title-{{id}}"></input>
+				<input type="text" value="{{title}}" class="add-title" id="add-title-{{id}}"></input>
 			</div>
 			<div class="mdl-card__supporting-text">
-				<textarea cols="30" rows="10" placeholder="Add text" class="add-text" id="add-text-{{id}}"></textarea>
+				<textarea cols="30" rows="10" value="{{text}}" class="add-text" id="add-text-{{id}}">{{text}}</textarea>
 			</div>
 			<div class="mdl-card__actions mdl-card--border">
 				<div class="mdl-layout-spacer"></div>
 				<button class="mdl-button mdl-js-button mdl-button--icon" id="ok-{{id}}">
-					<i class="material-icons">done</i>
+					<i class="material-icons mdl-color-text--green">done</i>
 				</button>
 				<button class="mdl-button mdl-js-button mdl-button--icon" id="cancel-{{id}}">
-					<i class="material-icons">close</i>
+					<i class="material-icons mdl-color-text--red">close</i>
 				</button>
 			</div>
 		</div>

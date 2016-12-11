@@ -33,8 +33,8 @@ export class Controller {
 
 
 
-	create(title, text, order) {
-		return ModelConnect.create(title, text, order);
+	create(title, text) {
+		return ModelConnect.create(title, text);
 	}
 
 	readAll() {
@@ -45,8 +45,8 @@ export class Controller {
 		return ModelConnect.read(id);
 	}
 
-	update(id, title = null, text = null, order = null) {
-		return ModelConnect.update(id, title, text, order);
+	update(id, title = null, text = null, position = null) {
+		return ModelConnect.update(id, title, text, position);
 	}
 
 	delete(id) {
@@ -103,14 +103,16 @@ class CtrlNote {
 
 		if (this.view.controls.cancel) {
 			this.view.controls.cancel.addEventListener('click', () => {
-				this.dismiss();
+				this.dismiss(this.state);
 			});
 		}
 	}
 
 
 	edit() {
-		console.log('edit-' + this.data.id);
+		this.state = 'edit';
+		this.view.updateNote(this.data, 'edit');
+		this.bindEvents();
 	}
 
 	delete() {
@@ -119,17 +121,43 @@ class CtrlNote {
 	}
 
 	save() {
+
+		var prevState = JSON.parse(JSON.stringify(this.view.state));
+		console.log(prevState);
 		var title = document.getElementById('add-title-' + this.data.id);
 		var text = document.getElementById('add-text-' + this.data.id);
 
-		var savedNote = this.parentCtrl.create(title.value, text.value, 1);
-		this.data = savedNote.response.data;
-		
-		this.view.updateNote(this.data);
+		var savedNote;
+		switch(prevState) {
+			case 'new':
+				savedNote = this.parentCtrl.create(title.value, text.value);
+				this.data = savedNote.response.data;
+				
+				this.view.updateNote(this.data, 'saved');
+				break;
+			case 'edit':
+				console.log('entering save edit');
+				savedNote = this.parentCtrl.update(this.data.id, title.value, text.value);
+				this.data = savedNote.response.data;
+				
+				this.view.updateNote(this.data, 'saved');
+				break;
+		}
+
+		this.bindEvents();
 	}
 
-	dismiss() {
-		this.view.removeNote();
+	dismiss(state) {
+		switch(state) {
+			case 'new': 
+				this.view.removeNote();
+				break;
+			case 'edit':
+				this.view.updateNote(this.data, 'saved');
+				this.bindEvents();
+				break;
+		}
+		
 	}
 
 }

@@ -35,7 +35,11 @@ export class ViewNote {
 
 		this.drawNote(this.state);
 
-		this.controls = {
+		this.controls = this.getControls();
+	}
+
+	getControls() {
+		return {
 			edit: document.getElementById('edit-' + this.data.id), 
 			delete: document.getElementById('delete-' + this.data.id),
 			ok: document.getElementById('ok-' + this.data.id),
@@ -43,9 +47,11 @@ export class ViewNote {
 		};
 	}
 
-	updateNote(data) {
+	updateNote(data, toState) {
 		this.data = data;
-		this.redrawNote('saved');
+		this.state = toState;
+		this.redrawNote(toState);
+		this.controls = this.getControls();
 	}
 
 	drawNote(state='saved') {
@@ -53,19 +59,19 @@ export class ViewNote {
 
 		switch (state) {
 			case 'new':
-				template = this.template.edit;
+				template = this.template.new;
 				this.element = this.createDomElement(template, this.data);
 				this.insertInPlace(this.element, 'end');
 				break;
 			case 'edit':
 				template = this.template.edit;
 				this.element = this.createDomElement(template, this.data);
-				this.insertInPlace(this.element, 'self');
+				this.insertInPlace(this.element, this.data.position);
 				break;
 			case 'saved':
 				template = this.template.fixed;
 				this.element = this.createDomElement(template, this.data);
-				this.insertInPlace(this.element, 'end');
+				this.insertInPlace(this.element, this.data.position);
 				break;
 		}		
 	}
@@ -87,18 +93,23 @@ export class ViewNote {
 	}
 
 	insertInPlace(element, place='end') {
-		switch (place) {
-			case 'end':
-				var add = document.getElementById('post-it-add');
+		if (place == 'end') {
+			var add = document.getElementById('post-it-add');
 
-				if (add) {
-					this.container.insertBefore(element, add);
-				} else {
-					this.container.appendChild(element);
-				}
-				break;
-			case 'self':
-				break;
+			if (add) {
+				this.container.insertBefore(element, add);
+			} else {
+				this.container.appendChild(element);
+			}
+		} else {
+			if (place < this.container.children.length) {
+				
+				var next = this.container.children[place];
+
+				this.container.insertBefore(element, next);
+			} else {
+				this.insertInPlace(element, 'end');
+			}
 		}
 	}
 }
