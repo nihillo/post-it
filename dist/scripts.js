@@ -465,13 +465,40 @@
 		function Controller() {
 			_classCallCheck(this, Controller);
 
-			var skin = _configmodel.ModelConnect.userSkin;
-			var content = this.readAll().response;
+			this.skin = _configmodel.ModelConnect.userSkin;
+			this.view = new _view.View(this.skin);
 
-			this.view = new _view.View(content, skin);
+			this.addSavedNotes();
+			this.addCreator();
 		}
 
 		_createClass(Controller, [{
+			key: 'addSavedNotes',
+			value: function addSavedNotes() {
+				var content = this.readAll().response;
+				this.notes = [];
+
+				for (var i = 0; i < content.data.length; i++) {
+					this.notes.push(new CtrlNote('saved', this, content.data[i], this.view.container, this.skin));
+				}
+			}
+		}, {
+			key: 'addCreator',
+			value: function addCreator() {
+				var _this = this;
+
+				this.view.appendCreator();
+
+				this.view.creator.addEventListener('click', function () {
+					_this.addNew();
+				});
+			}
+		}, {
+			key: 'addNew',
+			value: function addNew() {
+				this.notes.push(new CtrlNote('new', this, {}, this.view.container, this.skin));
+			}
+		}, {
 			key: 'create',
 			value: function create(title, text, order) {
 				return _configmodel.ModelConnect.create(title, text, order);
@@ -500,12 +527,92 @@
 			value: function _delete(id) {
 				return _configmodel.ModelConnect.delete(id);
 			}
-		}, {
-			key: 'bindEvents',
-			value: function bindEvents() {}
 		}]);
 
 		return Controller;
+	}();
+
+	var CtrlNote = function () {
+		function CtrlNote(state, parentCtrl, data, container, skin) {
+			_classCallCheck(this, CtrlNote);
+
+			this.parentCtrl = parentCtrl;
+			this.state = state;
+
+			if (this.state == 'new') {
+
+				this.data = {
+					id: 'new'
+				};
+			} else {
+
+				this.data = data;
+			}
+
+			this.view = new _view.ViewNote(this.state, this.data, container, skin);
+
+			this.bindEvents();
+		}
+
+		_createClass(CtrlNote, [{
+			key: 'bindEvents',
+			value: function bindEvents() {
+				var _this2 = this;
+
+				if (this.view.controls.edit) {
+					this.view.controls.edit.addEventListener('click', function () {
+						_this2.edit();
+					});
+				}
+
+				if (this.view.controls.delete) {
+					this.view.controls.delete.addEventListener('click', function () {
+						_this2.delete();
+					});
+				}
+
+				if (this.view.controls.ok) {
+					this.view.controls.ok.addEventListener('click', function () {
+						_this2.save();
+					});
+				}
+
+				if (this.view.controls.cancel) {
+					this.view.controls.cancel.addEventListener('click', function () {
+						_this2.dismiss();
+					});
+				}
+			}
+		}, {
+			key: 'edit',
+			value: function edit() {
+				console.log('edit-' + this.data.id);
+			}
+		}, {
+			key: 'delete',
+			value: function _delete() {
+				this.view.removeNote();
+				this.parentCtrl.delete(this.data.id);
+			}
+		}, {
+			key: 'save',
+			value: function save() {
+				var title = document.getElementById('add-title-' + this.data.id);
+				var text = document.getElementById('add-text-' + this.data.id);
+
+				var savedNote = this.parentCtrl.create(title.value, text.value, 1);
+				this.data = savedNote.response.data;
+
+				this.view.updateNote(this.data);
+			}
+		}, {
+			key: 'dismiss',
+			value: function dismiss() {
+				this.view.removeNote();
+			}
+		}]);
+
+		return CtrlNote;
 	}();
 
 /***/ },
@@ -517,7 +624,7 @@
 	Object.defineProperty(exports, "__esModule", {
 		value: true
 	});
-	exports.View = undefined;
+	exports.ViewNote = exports.View = undefined;
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -528,35 +635,128 @@
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var templates = {
-		'classy': _classy.html,
-		'kitsch': _kitsch.html
+		'classy': _classy.note,
+		'kitsch': _kitsch.note
 	};
 
 	var View = exports.View = function () {
-		function View(content, skin) {
+		function View(skin) {
 			_classCallCheck(this, View);
 
-			this.content = content; // Array with json post-it objects;
-			this.template = templates[skin]; // HTML template
-
 			this.container = document.getElementById('content');
-
-			this.drawUI();
+			this.template = templates[skin]; // HTML template
 		}
 
 		_createClass(View, [{
-			key: 'drawUI',
-			value: function drawUI() {
-				this.container.innerHTML = Mustache.render(this.template, this.content);
+			key: 'appendCreator',
+			value: function appendCreator() {
+				var template = this.template.creator;
+
+				var auxParent = document.createElement('div');
+				auxParent.innerHTML = Mustache.render(template, {});
+
+				this.creator = auxParent.children[0];
+				this.container.appendChild(this.creator);
 			}
 		}]);
 
 		return View;
 	}();
 
-	var Template = function Template() {
-		_classCallCheck(this, Template);
-	};
+	var ViewNote = exports.ViewNote = function () {
+		function ViewNote(state, data, container, skin) {
+			_classCallCheck(this, ViewNote);
+
+			this.data = data;
+			this.state = state;
+			this.container = container;
+			this.template = templates[skin];
+
+			this.drawNote(this.state);
+
+			this.controls = {
+				edit: document.getElementById('edit-' + this.data.id),
+				delete: document.getElementById('delete-' + this.data.id),
+				ok: document.getElementById('ok-' + this.data.id),
+				cancel: document.getElementById('cancel-' + this.data.id)
+			};
+		}
+
+		_createClass(ViewNote, [{
+			key: 'updateNote',
+			value: function updateNote(data) {
+				this.data = data;
+				this.redrawNote('saved');
+			}
+		}, {
+			key: 'drawNote',
+			value: function drawNote() {
+				var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'saved';
+
+				var template;
+
+				switch (state) {
+					case 'new':
+						template = this.template.edit;
+						this.element = this.createDomElement(template, this.data);
+						this.insertInPlace(this.element, 'end');
+						break;
+					case 'edit':
+						template = this.template.edit;
+						this.element = this.createDomElement(template, this.data);
+						this.insertInPlace(this.element, 'self');
+						break;
+					case 'saved':
+						template = this.template.fixed;
+						this.element = this.createDomElement(template, this.data);
+						this.insertInPlace(this.element, 'end');
+						break;
+				}
+			}
+		}, {
+			key: 'redrawNote',
+			value: function redrawNote() {
+				var toState = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'saved';
+
+				this.removeNote();
+				this.drawNote(toState);
+			}
+		}, {
+			key: 'removeNote',
+			value: function removeNote() {
+				this.container.removeChild(this.element);
+			}
+		}, {
+			key: 'createDomElement',
+			value: function createDomElement(template, data) {
+				var auxParent = document.createElement('div');
+				auxParent.innerHTML = Mustache.render(template, data);
+
+				return auxParent.children[0];
+			}
+		}, {
+			key: 'insertInPlace',
+			value: function insertInPlace(element) {
+				var place = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'end';
+
+				switch (place) {
+					case 'end':
+						var add = document.getElementById('post-it-add');
+
+						if (add) {
+							this.container.insertBefore(element, add);
+						} else {
+							this.container.appendChild(element);
+						}
+						break;
+					case 'self':
+						break;
+				}
+			}
+		}]);
+
+		return ViewNote;
+	}();
 
 /***/ },
 /* 8 */
@@ -567,9 +767,32 @@
 	Object.defineProperty(exports, "__esModule", {
 		value: true
 	});
-	var html = exports.html = undefined;
+	var note = exports.note = undefined;
 
-	exports.html = html = "\n{{#data}}\n\t<div id=\"post-it-{{id}}\" class=\"mdl-card mdl-shadow--2dp post-it\">\n\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t<h2 class=\"mdl-card__title-text\">{{title}}</h2>\n\t\t</div>\n\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t{{text}}\n\t\t</div>\n\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\">\n\t\t\t\t<i class=\"material-icons\">edit</i>\n\t\t\t</button>\n\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\">\n\t\t\t\t<i class=\"material-icons\">delete</i>\n\t\t\t</button>\n\t\t</div>\n\t</div>\n{{/data}}\n";
+	exports.note = note = { /*
+	                        new: `
+	                        <div id="post-it-{{id}}" class="mdl-card mdl-shadow--2dp post-it">
+	                        <div class="mdl-card__title mdl-card--expand">
+	                        <input type="text" placeholder="Add title" class="add-title" id="add-title-{{id}}"></input>
+	                        </div>
+	                        <div class="mdl-card__supporting-text">
+	                        <textarea cols="30" rows="10" placeholder="Add text" class="add-text" id="add-text-{{id}}"></textarea>
+	                        </div>
+	                        <div class="mdl-card__actions mdl-card--border">
+	                        <div class="mdl-layout-spacer"></div>
+	                        <button class="mdl-button mdl-js-button mdl-button--icon" id="ok-{{id}}">
+	                        <i class="material-icons">done</i>
+	                        </button>
+	                        <button class="mdl-button mdl-js-button mdl-button--icon" id="cancel-{{id}}">
+	                        <i class="material-icons">close</i>
+	                        </button>
+	                        </div>
+	                        </div>
+	                        `,*/
+		edit: "\n\t\t<div id=\"post-it-{{id}}\" class=\"mdl-card mdl-shadow--2dp post-it\">\n\t\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t\t<input type=\"text\" placeholder=\"Add title\" class=\"add-title\" id=\"add-title-{{id}}\"></input>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t\t<textarea cols=\"30\" rows=\"10\" placeholder=\"Add text\" class=\"add-text\" id=\"add-text-{{id}}\"></textarea>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"ok-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons\">done</i>\n\t\t\t\t</button>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"cancel-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons\">close</i>\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
+		fixed: "\n\t\t<div id=\"post-it-{{id}}\" class=\"mdl-card mdl-shadow--2dp post-it\">\n\t\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t\t<h2 class=\"mdl-card__title-text\">{{title}}</h2>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t\t{{text}}\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"edit-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons\">edit</i>\n\t\t\t\t</button>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"delete-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons\">delete</i>\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
+		creator: "\n\t\t<div id=\"post-it-add\" class=\"mdl-card mdl-shadow--2dp post-it\">\n\t\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t\t<h2 class=\"mdl-card__title-text\"></h2>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t\t<div class=\"mdl-button mdl-js-button mdl-button--icon add-icon-big\">\n\t\t\t\t\t<i class=\"material-icons\">add</i>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t\t<div class=\"add-action-text\">ADD NOTE</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	};
 
 /***/ },
 /* 9 */
@@ -580,7 +803,7 @@
 	Object.defineProperty(exports, "__esModule", {
 		value: true
 	});
-	var html = exports.html = "\n\t<h1>{{title}}</h1>\n";
+	var note = exports.note = "\n\t<h1>{{title}}</h1>\n";
 
 /***/ },
 /* 10 */
