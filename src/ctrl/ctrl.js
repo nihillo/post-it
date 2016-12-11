@@ -8,6 +8,8 @@ export class Controller {
 		
 		this.addSavedNotes();
 		this.addCreator();
+
+		this.dragSrc = null; // Used for drag & drop events
 	}
 
 	addSavedNotes() {
@@ -28,7 +30,10 @@ export class Controller {
 	}
 
 	addNew() {
-		this.notes.push(new CtrlNote('new', this, {}, this.view.container, this.skin));
+		var newNote = document.getElementById('post-it-new');
+		if (!newNote) {
+			this.notes.push(new CtrlNote('new', this, {}, this.view.container, this.skin));
+		}
 	}
 
 
@@ -106,6 +111,34 @@ class CtrlNote {
 				this.dismiss(this.state);
 			});
 		}
+
+		if (this.view.element.draggable) {
+			this.view.element.addEventListener('dragstart', (event) => {
+
+				this.dragStart(event);
+			});
+
+			this.view.element.addEventListener('dragenter', () => {
+
+				this.dragEnter();
+			});
+
+			this.view.element.addEventListener('dragover', (event) => {
+				this.dragOver(event);
+			});
+
+			this.view.element.addEventListener('dragleave', () => {
+				this.dragLeave();
+			});
+
+			this.view.element.addEventListener('drop', () => {
+				this.drop(event);
+			});
+
+			this.view.element.addEventListener('dragend', () => {
+				this.dragEnd();
+			});
+		}
 	}
 
 
@@ -160,4 +193,60 @@ class CtrlNote {
 		
 	}
 
+
+	dragStart(event) {
+		this.view.element.style.opacity = 0.4;
+
+		this.parentCtrl.dragSrc = this;
+
+		event.dataTransfer.dropEffect = 'move';
+		event.dataTransfer.effectAllowed = 'move';
+		event.dataTransfer.setData('text/html', this.view.element);
+	}
+
+	dragOver(event) {
+		if (this.parentCtrl.dragSrc != this) {
+			event.preventDefault();
+			event.dataTransfer.dropEffect = 'move';
+			event.dataTransfer.effectAllowed = 'move';
+			
+			return false;
+		}
+	}
+
+	dragEnter() {
+		if (this.parentCtrl.dragSrc != this) {
+			this.view.element.style.opacity = 0.4;
+		}
+	}
+
+	dragLeave() {
+		if (this.parentCtrl.dragSrc != this) {
+			this.view.element.style.opacity = 1;
+		}
+	}
+
+	drop(event) {
+		event.preventDefault();
+
+		if (this.parentCtrl.dragSrc != this) {
+
+			var moving = this.parentCtrl.dragSrc.view.element;
+			var container = this.view.element.parentNode;
+			var dest = this.view.element;
+
+			container.insertBefore(moving, dest);
+		}
+
+		return false;
+	}
+
+	dragEnd(){
+
+		console.log('holi');
+		var elements = document.querySelectorAll('[draggable="true"]');
+		for (let i = 0; i < elements.length; i++) {
+			elements[i].style.opacity = '1';		
+		}
+	}
 }

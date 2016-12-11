@@ -40,7 +40,7 @@ note = {
 		</div>
 	`,
 	fixed: `
-		<div id="post-it-{{id}}" class="mdl-card mdl-shadow--2dp post-it">
+		<div id="post-it-{{id}}" class="mdl-card mdl-shadow--2dp post-it" draggable="true">
 			<div class="mdl-card__title mdl-card--expand">
 				<h2 class="mdl-card__title-text">{{title}}</h2>
 			</div>

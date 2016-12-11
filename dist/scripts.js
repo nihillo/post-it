@@ -473,6 +473,8 @@
 
 			this.addSavedNotes();
 			this.addCreator();
+
+			this.dragSrc = null; // Used for drag & drop events
 		}
 
 		_createClass(Controller, [{
@@ -499,7 +501,10 @@
 		}, {
 			key: 'addNew',
 			value: function addNew() {
-				this.notes.push(new CtrlNote('new', this, {}, this.view.container, this.skin));
+				var newNote = document.getElementById('post-it-new');
+				if (!newNote) {
+					this.notes.push(new CtrlNote('new', this, {}, this.view.container, this.skin));
+				}
 			}
 		}, {
 			key: 'create',
@@ -585,6 +590,34 @@
 						_this2.dismiss(_this2.state);
 					});
 				}
+
+				if (this.view.element.draggable) {
+					this.view.element.addEventListener('dragstart', function (event) {
+
+						_this2.dragStart(event);
+					});
+
+					this.view.element.addEventListener('dragenter', function () {
+
+						_this2.dragEnter();
+					});
+
+					this.view.element.addEventListener('dragover', function (event) {
+						_this2.dragOver(event);
+					});
+
+					this.view.element.addEventListener('dragleave', function () {
+						_this2.dragLeave();
+					});
+
+					this.view.element.addEventListener('drop', function () {
+						_this2.drop(event);
+					});
+
+					this.view.element.addEventListener('dragend', function () {
+						_this2.dragEnd();
+					});
+				}
 			}
 		}, {
 			key: 'edit',
@@ -638,6 +671,68 @@
 						this.view.updateNote(this.data, 'saved');
 						this.bindEvents();
 						break;
+				}
+			}
+		}, {
+			key: 'dragStart',
+			value: function dragStart(event) {
+				this.view.element.style.opacity = 0.4;
+
+				this.parentCtrl.dragSrc = this;
+
+				event.dataTransfer.dropEffect = 'move';
+				event.dataTransfer.effectAllowed = 'move';
+				event.dataTransfer.setData('text/html', this.view.element);
+			}
+		}, {
+			key: 'dragOver',
+			value: function dragOver(event) {
+				if (this.parentCtrl.dragSrc != this) {
+					event.preventDefault();
+					event.dataTransfer.dropEffect = 'move';
+					event.dataTransfer.effectAllowed = 'move';
+
+					return false;
+				}
+			}
+		}, {
+			key: 'dragEnter',
+			value: function dragEnter() {
+				if (this.parentCtrl.dragSrc != this) {
+					this.view.element.style.opacity = 0.4;
+				}
+			}
+		}, {
+			key: 'dragLeave',
+			value: function dragLeave() {
+				if (this.parentCtrl.dragSrc != this) {
+					this.view.element.style.opacity = 1;
+				}
+			}
+		}, {
+			key: 'drop',
+			value: function drop(event) {
+				event.preventDefault();
+
+				if (this.parentCtrl.dragSrc != this) {
+
+					var moving = this.parentCtrl.dragSrc.view.element;
+					var container = this.view.element.parentNode;
+					var dest = this.view.element;
+
+					container.insertBefore(moving, dest);
+				}
+
+				return false;
+			}
+		}, {
+			key: 'dragEnd',
+			value: function dragEnd() {
+
+				console.log('holi');
+				var elements = document.querySelectorAll('[draggable="true"]');
+				for (var i = 0; i < elements.length; i++) {
+					elements[i].style.opacity = '1';
 				}
 			}
 		}]);
@@ -814,7 +909,7 @@
 	exports.note = note = {
 		new: "\n\t\t<div id=\"post-it-{{id}}\" class=\"mdl-card mdl-shadow--8dp post-it\">\n\t\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t\t<input type=\"text\" placeholder=\"Add title\" class=\"add-title\" id=\"add-title-{{id}}\"></input>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t\t<textarea cols=\"30\" rows=\"10\" placeholder=\"Add text\" class=\"add-text\" id=\"add-text-{{id}}\"></textarea>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"ok-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons mdl-color-text--green\">done</i>\n\t\t\t\t</button>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"cancel-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons mdl-color-text--red\">close</i>\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
 		edit: "\n\t\t<div id=\"post-it-{{id}}\" class=\"mdl-card mdl-shadow--8dp post-it\">\n\t\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t\t<input type=\"text\" value=\"{{title}}\" class=\"add-title\" id=\"add-title-{{id}}\"></input>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t\t<textarea cols=\"30\" rows=\"10\" value=\"{{text}}\" class=\"add-text\" id=\"add-text-{{id}}\">{{text}}</textarea>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"ok-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons mdl-color-text--green\">done</i>\n\t\t\t\t</button>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"cancel-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons mdl-color-text--red\">close</i>\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
-		fixed: "\n\t\t<div id=\"post-it-{{id}}\" class=\"mdl-card mdl-shadow--2dp post-it\">\n\t\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t\t<h2 class=\"mdl-card__title-text\">{{title}}</h2>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t\t{{text}}\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"edit-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons\">edit</i>\n\t\t\t\t</button>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"delete-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons\">delete</i>\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
+		fixed: "\n\t\t<div id=\"post-it-{{id}}\" class=\"mdl-card mdl-shadow--2dp post-it\" draggable=\"true\">\n\t\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t\t<h2 class=\"mdl-card__title-text\">{{title}}</h2>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t\t{{text}}\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"edit-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons\">edit</i>\n\t\t\t\t</button>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"delete-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons\">delete</i>\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
 		creator: "\n\t\t<div id=\"post-it-add\" class=\"mdl-card mdl-shadow--2dp post-it\">\n\t\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t\t<h2 class=\"mdl-card__title-text\"></h2>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t\t<div class=\"mdl-button mdl-js-button mdl-button--icon add-icon-big\">\n\t\t\t\t\t<i class=\"material-icons\">add</i>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t\t<div class=\"add-action-text\">ADD NOTE</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
