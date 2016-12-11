@@ -93,9 +93,9 @@ export class Model {
 					
 				if (title) {note.title = title;}
 				if (text) {note.text = text;}
-				if (position) {note.position = position;}
+				if (position !== null || position !== undefined) {note.position = position;}
 
-				if (title || text || position) {note.lastModified = now;}
+				if (title || text) {note.lastModified = now;}
 
 				this.save();
 

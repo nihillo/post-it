@@ -56,8 +56,8 @@ export class ModelConnect {
 		return MODEL.read(id);
 	}
 
-	static update(id, title = null, text = null, order = null) {
-		return MODEL.update(id, title, text, order);
+	static update(id, title = null, text = null, position = null) {
+		return MODEL.update(id, title, text, position);
 	}
 
 	static delete(id) {

@@ -29,6 +29,8 @@ note = {
 				<textarea cols="30" rows="10" value="{{text}}" class="add-text" id="add-text-{{id}}">{{text}}</textarea>
 			</div>
 			<div class="mdl-card__actions mdl-card--border">
+				<div class="date">Created: {{fDate}}</div>
+				<div class="date">Modified: {{fLastModified}}</div>
 				<div class="mdl-layout-spacer"></div>
 				<button class="mdl-button mdl-js-button mdl-button--icon" id="ok-{{id}}">
 					<i class="material-icons mdl-color-text--green">done</i>
@@ -40,7 +42,7 @@ note = {
 		</div>
 	`,
 	fixed: `
-		<div id="post-it-{{id}}" class="mdl-card mdl-shadow--2dp post-it" draggable="true">
+		<div data-pos="{{position}}" data-fixed="true" id="post-it-{{id}}" class="mdl-card mdl-shadow--2dp post-it" draggable="true">
 			<div class="mdl-card__title mdl-card--expand">
 				<h2 class="mdl-card__title-text">{{title}}</h2>
 			</div>
@@ -48,6 +50,8 @@ note = {
 				{{text}}
 			</div>
 			<div class="mdl-card__actions mdl-card--border">
+				<div class="date">Created: {{fDate}}</div>
+				<div class="date">Modified: {{fLastModified}}</div>
 				<div class="mdl-layout-spacer"></div>
 				<button class="mdl-button mdl-js-button mdl-button--icon" id="edit-{{id}}">
 					<i class="material-icons">edit</i>

@@ -80,3 +80,8 @@
 .add-text::-webkit-resizer {
 	display: none;
 }
+
+.date {
+	color: #aaa;
+	font-size: 0.8em;
+}

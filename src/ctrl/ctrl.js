@@ -6,10 +6,21 @@ export class Controller {
 		this.skin = ModelConnect.userSkin;
 		this.view = new View(this.skin);
 		
+		this.loadElements();
+	}
+
+	loadElements() {
 		this.addSavedNotes();
 		this.addCreator();
 
 		this.dragSrc = null; // Used for drag & drop events
+	}
+
+	reloadElements() {
+		this.notes = [];
+		this.view.clear();
+
+		this.loadElements();
 	}
 
 	addSavedNotes() {
@@ -30,13 +41,30 @@ export class Controller {
 	}
 
 	addNew() {
-		var newNote = document.getElementById('post-it-new');
+		var newNote = this.view.getAddNew();
 		if (!newNote) {
-			this.notes.push(new CtrlNote('new', this, {}, this.view.container, this.skin));
+			this.notes.push(new CtrlNote('new', this, {id: 'new'}, this.view.container, this.skin));
 		}
 	}
 
+	fixItemsAfterDrag() {
+		this.view.fixItemsAfterDrag();
+	}
 
+	reorderNotesAfterDrop() {
+		var elements = document.querySelectorAll('[data-fixed="true"]');
+
+		for (let i = 0; i < elements.length; i++) {
+			let pos = i;
+			let id = elements[i].id.split('-')[2];
+
+			this.update(id, null, null, pos);
+		}
+
+		this.reloadElements();
+	}
+
+	
 
 	create(title, text) {
 		return ModelConnect.create(title, text);
@@ -66,24 +94,23 @@ class CtrlNote {
 		this.parentCtrl = parentCtrl;
 		this.state = state;
 
-		if (this.state == 'new') {
+		this.data = data;
 
-			this.data = {
-				id: 'new'
-			};
-
-		} else {
-
-			this.data = data;
-
-		}
+		this.formatDates();
+ 	
 		
-		
-
 		this.view = new ViewNote(this.state, this.data, container, skin);
 
 		this.bindEvents();
 
+	}
+
+	formatDates() {
+		var d = new Date(this.data.date);
+		this.data.fDate = d.toLocaleDateString() + ' - ' + d.toLocaleTimeString();
+
+		var m = new Date(this.data.lastModified);
+		this.data.fLastModified = m.toLocaleDateString() + ' - ' + m.toLocaleTimeString();
 	}
 
 	bindEvents() {
@@ -156,7 +183,6 @@ class CtrlNote {
 	save() {
 
 		var prevState = JSON.parse(JSON.stringify(this.view.state));
-		console.log(prevState);
 		var title = document.getElementById('add-title-' + this.data.id);
 		var text = document.getElementById('add-text-' + this.data.id);
 
@@ -165,6 +191,8 @@ class CtrlNote {
 			case 'new':
 				savedNote = this.parentCtrl.create(title.value, text.value);
 				this.data = savedNote.response.data;
+
+				this.formatDates();
 				
 				this.view.updateNote(this.data, 'saved');
 				break;
@@ -216,13 +244,17 @@ class CtrlNote {
 
 	dragEnter() {
 		if (this.parentCtrl.dragSrc != this) {
-			this.view.element.style.opacity = 0.4;
+			this.view.element.style.opacity = 0.6;
+			// this.view.element.style.left = '40px';
+			this.view.element.style.borderLeft = '3px dashed #88bdff';
 		}
 	}
 
 	dragLeave() {
 		if (this.parentCtrl.dragSrc != this) {
 			this.view.element.style.opacity = 1;
+			// this.view.element.style.left = '0';
+			this.view.element.style.borderLeft = 0;
 		}
 	}
 
@@ -236,6 +268,8 @@ class CtrlNote {
 			var dest = this.view.element;
 
 			container.insertBefore(moving, dest);
+
+			this.parentCtrl.reorderNotesAfterDrop();
 		}
 
 		return false;
@@ -243,10 +277,7 @@ class CtrlNote {
 
 	dragEnd(){
 
-		console.log('holi');
-		var elements = document.querySelectorAll('[draggable="true"]');
-		for (let i = 0; i < elements.length; i++) {
-			elements[i].style.opacity = '1';		
-		}
+		this.parentCtrl.fixItemsAfterDrag();
+
 	}
 }

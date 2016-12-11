@@ -21,6 +21,25 @@ export class View {
 		this.creator = auxParent.children[0];
 		this.container.appendChild(this.creator); 
 	}
+
+	clear() {
+		this.container.innerHTML = '';
+	}
+
+	getAddNew() {
+		return document.getElementById('post-it-new');
+	}
+
+	getDraggable() {
+		return document.querySelectorAll('[draggable="true"]');
+	}
+
+	fixItemsAfterDrag() {
+		var elements = this.getDraggable();
+		for (let i = 0; i < elements.length; i++) {
+			elements[i].style.opacity = '1';	
+		}
+	}
 }
 
 
@@ -102,14 +121,25 @@ export class ViewNote {
 				this.container.appendChild(element);
 			}
 		} else {
-			if (place < this.container.children.length) {
+			if (place < this.container.children.length + 1 && this.searchNextElmByPosition(place)) {
 				
-				var next = this.container.children[place];
-
+				var next = this.searchNextElmByPosition(place);
 				this.container.insertBefore(element, next);
+
 			} else {
 				this.insertInPlace(element, 'end');
 			}
 		}
+	}
+
+	searchNextElmByPosition(pos) {
+
+		for (let i = 0; i < this.container.children.length; i++) {
+			if (this.container.children[i].getAttribute('data-pos') > pos) {
+				return this.container.children[i];
+			}
+		}
+
+		return null;
 	}
 }

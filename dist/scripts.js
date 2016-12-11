@@ -173,11 +173,11 @@
 						if (text) {
 							note.text = text;
 						}
-						if (position) {
+						if (position !== null || position !== undefined) {
 							note.position = position;
 						}
 
-						if (title || text || position) {
+						if (title || text) {
 							note.lastModified = now;
 						}
 
@@ -362,9 +362,9 @@
 			value: function update(id) {
 				var title = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 				var text = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-				var order = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
+				var position = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
 
-				return MODEL.update(id, title, text, order);
+				return MODEL.update(id, title, text, position);
 			}
 		}, {
 			key: 'delete',
@@ -471,13 +471,26 @@
 			this.skin = _configmodel.ModelConnect.userSkin;
 			this.view = new _view.View(this.skin);
 
-			this.addSavedNotes();
-			this.addCreator();
-
-			this.dragSrc = null; // Used for drag & drop events
+			this.loadElements();
 		}
 
 		_createClass(Controller, [{
+			key: 'loadElements',
+			value: function loadElements() {
+				this.addSavedNotes();
+				this.addCreator();
+
+				this.dragSrc = null; // Used for drag & drop events
+			}
+		}, {
+			key: 'reloadElements',
+			value: function reloadElements() {
+				this.notes = [];
+				this.view.clear();
+
+				this.loadElements();
+			}
+		}, {
 			key: 'addSavedNotes',
 			value: function addSavedNotes() {
 				var content = this.readAll().response;
@@ -501,10 +514,29 @@
 		}, {
 			key: 'addNew',
 			value: function addNew() {
-				var newNote = document.getElementById('post-it-new');
+				var newNote = this.view.getAddNew();
 				if (!newNote) {
-					this.notes.push(new CtrlNote('new', this, {}, this.view.container, this.skin));
+					this.notes.push(new CtrlNote('new', this, { id: 'new' }, this.view.container, this.skin));
 				}
+			}
+		}, {
+			key: 'fixItemsAfterDrag',
+			value: function fixItemsAfterDrag() {
+				this.view.fixItemsAfterDrag();
+			}
+		}, {
+			key: 'reorderNotesAfterDrop',
+			value: function reorderNotesAfterDrop() {
+				var elements = document.querySelectorAll('[data-fixed="true"]');
+
+				for (var i = 0; i < elements.length; i++) {
+					var pos = i;
+					var id = elements[i].id.split('-')[2];
+
+					this.update(id, null, null, pos);
+				}
+
+				this.reloadElements();
 			}
 		}, {
 			key: 'create',
@@ -547,15 +579,9 @@
 			this.parentCtrl = parentCtrl;
 			this.state = state;
 
-			if (this.state == 'new') {
+			this.data = data;
 
-				this.data = {
-					id: 'new'
-				};
-			} else {
-
-				this.data = data;
-			}
+			this.formatDates();
 
 			this.view = new _view.ViewNote(this.state, this.data, container, skin);
 
@@ -563,6 +589,15 @@
 		}
 
 		_createClass(CtrlNote, [{
+			key: 'formatDates',
+			value: function formatDates() {
+				var d = new Date(this.data.date);
+				this.data.fDate = d.toLocaleDateString() + ' - ' + d.toLocaleTimeString();
+
+				var m = new Date(this.data.lastModified);
+				this.data.fLastModified = m.toLocaleDateString() + ' - ' + m.toLocaleTimeString();
+			}
+		}, {
 			key: 'bindEvents',
 			value: function bindEvents() {
 				var _this2 = this;
@@ -637,7 +672,6 @@
 			value: function save() {
 
 				var prevState = JSON.parse(JSON.stringify(this.view.state));
-				console.log(prevState);
 				var title = document.getElementById('add-title-' + this.data.id);
 				var text = document.getElementById('add-text-' + this.data.id);
 
@@ -646,6 +680,8 @@
 					case 'new':
 						savedNote = this.parentCtrl.create(title.value, text.value);
 						this.data = savedNote.response.data;
+
+						this.formatDates();
 
 						this.view.updateNote(this.data, 'saved');
 						break;
@@ -699,7 +735,9 @@
 			key: 'dragEnter',
 			value: function dragEnter() {
 				if (this.parentCtrl.dragSrc != this) {
-					this.view.element.style.opacity = 0.4;
+					this.view.element.style.opacity = 0.6;
+					// this.view.element.style.left = '40px';
+					this.view.element.style.borderLeft = '3px dashed #88bdff';
 				}
 			}
 		}, {
@@ -707,6 +745,8 @@
 			value: function dragLeave() {
 				if (this.parentCtrl.dragSrc != this) {
 					this.view.element.style.opacity = 1;
+					// this.view.element.style.left = '0';
+					this.view.element.style.borderLeft = 0;
 				}
 			}
 		}, {
@@ -721,6 +761,8 @@
 					var dest = this.view.element;
 
 					container.insertBefore(moving, dest);
+
+					this.parentCtrl.reorderNotesAfterDrop();
 				}
 
 				return false;
@@ -729,11 +771,7 @@
 			key: 'dragEnd',
 			value: function dragEnd() {
 
-				console.log('holi');
-				var elements = document.querySelectorAll('[draggable="true"]');
-				for (var i = 0; i < elements.length; i++) {
-					elements[i].style.opacity = '1';
-				}
+				this.parentCtrl.fixItemsAfterDrag();
 			}
 		}]);
 
@@ -782,6 +820,29 @@
 
 				this.creator = auxParent.children[0];
 				this.container.appendChild(this.creator);
+			}
+		}, {
+			key: 'clear',
+			value: function clear() {
+				this.container.innerHTML = '';
+			}
+		}, {
+			key: 'getAddNew',
+			value: function getAddNew() {
+				return document.getElementById('post-it-new');
+			}
+		}, {
+			key: 'getDraggable',
+			value: function getDraggable() {
+				return document.querySelectorAll('[draggable="true"]');
+			}
+		}, {
+			key: 'fixItemsAfterDrag',
+			value: function fixItemsAfterDrag() {
+				var elements = this.getDraggable();
+				for (var i = 0; i < elements.length; i++) {
+					elements[i].style.opacity = '1';
+				}
 			}
 		}]);
 
@@ -880,15 +941,26 @@
 						this.container.appendChild(element);
 					}
 				} else {
-					if (place < this.container.children.length) {
+					if (place < this.container.children.length + 1 && this.searchNextElmByPosition(place)) {
 
-						var next = this.container.children[place];
-
+						var next = this.searchNextElmByPosition(place);
 						this.container.insertBefore(element, next);
 					} else {
 						this.insertInPlace(element, 'end');
 					}
 				}
+			}
+		}, {
+			key: 'searchNextElmByPosition',
+			value: function searchNextElmByPosition(pos) {
+
+				for (var i = 0; i < this.container.children.length; i++) {
+					if (this.container.children[i].getAttribute('data-pos') > pos) {
+						return this.container.children[i];
+					}
+				}
+
+				return null;
 			}
 		}]);
 
@@ -908,8 +980,8 @@
 
 	exports.note = note = {
 		new: "\n\t\t<div id=\"post-it-{{id}}\" class=\"mdl-card mdl-shadow--8dp post-it\">\n\t\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t\t<input type=\"text\" placeholder=\"Add title\" class=\"add-title\" id=\"add-title-{{id}}\"></input>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t\t<textarea cols=\"30\" rows=\"10\" placeholder=\"Add text\" class=\"add-text\" id=\"add-text-{{id}}\"></textarea>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"ok-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons mdl-color-text--green\">done</i>\n\t\t\t\t</button>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"cancel-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons mdl-color-text--red\">close</i>\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
-		edit: "\n\t\t<div id=\"post-it-{{id}}\" class=\"mdl-card mdl-shadow--8dp post-it\">\n\t\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t\t<input type=\"text\" value=\"{{title}}\" class=\"add-title\" id=\"add-title-{{id}}\"></input>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t\t<textarea cols=\"30\" rows=\"10\" value=\"{{text}}\" class=\"add-text\" id=\"add-text-{{id}}\">{{text}}</textarea>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"ok-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons mdl-color-text--green\">done</i>\n\t\t\t\t</button>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"cancel-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons mdl-color-text--red\">close</i>\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
-		fixed: "\n\t\t<div id=\"post-it-{{id}}\" class=\"mdl-card mdl-shadow--2dp post-it\" draggable=\"true\">\n\t\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t\t<h2 class=\"mdl-card__title-text\">{{title}}</h2>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t\t{{text}}\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"edit-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons\">edit</i>\n\t\t\t\t</button>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"delete-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons\">delete</i>\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
+		edit: "\n\t\t<div id=\"post-it-{{id}}\" class=\"mdl-card mdl-shadow--8dp post-it\">\n\t\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t\t<input type=\"text\" value=\"{{title}}\" class=\"add-title\" id=\"add-title-{{id}}\"></input>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t\t<textarea cols=\"30\" rows=\"10\" value=\"{{text}}\" class=\"add-text\" id=\"add-text-{{id}}\">{{text}}</textarea>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t\t<div class=\"date\">Created: {{fDate}}</div>\n\t\t\t\t<div class=\"date\">Modified: {{fLastModified}}</div>\n\t\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"ok-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons mdl-color-text--green\">done</i>\n\t\t\t\t</button>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"cancel-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons mdl-color-text--red\">close</i>\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
+		fixed: "\n\t\t<div data-pos=\"{{position}}\" data-fixed=\"true\" id=\"post-it-{{id}}\" class=\"mdl-card mdl-shadow--2dp post-it\" draggable=\"true\">\n\t\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t\t<h2 class=\"mdl-card__title-text\">{{title}}</h2>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t\t{{text}}\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t\t<div class=\"date\">Created: {{fDate}}</div>\n\t\t\t\t<div class=\"date\">Modified: {{fLastModified}}</div>\n\t\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"edit-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons\">edit</i>\n\t\t\t\t</button>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"delete-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons\">delete</i>\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
 		creator: "\n\t\t<div id=\"post-it-add\" class=\"mdl-card mdl-shadow--2dp post-it\">\n\t\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t\t<h2 class=\"mdl-card__title-text\"></h2>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t\t<div class=\"mdl-button mdl-js-button mdl-button--icon add-icon-big\">\n\t\t\t\t\t<i class=\"material-icons\">add</i>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t\t<div class=\"add-action-text\">ADD NOTE</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
