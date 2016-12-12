@@ -115,10 +115,12 @@ class CtrlNote {
 
 		this.formatDates();
  	
-		
+		this.showTime();
 		this.view = new ViewNote(this.state, this.data, container, skin);
 
 		this.bindEvents();
+
+		
 
 	}
 
@@ -128,6 +130,35 @@ class CtrlNote {
 
 		var m = new Date(this.data.lastModified);
 		this.data.fLastModified = m.toLocaleDateString() + ' - ' + m.toLocaleTimeString();
+	}
+
+	timeAgo() {
+		var created = new Date(this.data.date);
+		var now = new Date();
+
+		var miliseconds = now.getTime() - created.getTime();
+
+		var minutes = Math.floor(miliseconds / 60000);
+
+		if (minutes < 60) { return minutes + ' minutes ago';}
+
+		var hours = Math.floor(minutes / 60); 
+
+		if (hours < 24) {return hours + ' hours ago';}
+
+		var days = Math.floor(hours / 24);
+
+		if (days < 7) { return days + ' days ago';}
+
+		return created.toLocaleDateString();
+	}
+
+	showTime() {
+		this.data.timeAgo = this.timeAgo();
+		window.setInterval(() => {
+			this.data.timeAgo = this.timeAgo();
+			this.view.updateNote(this.data, this.state);
+		}, 60000);
 	}
 
 	bindEvents() {
@@ -209,6 +240,7 @@ class CtrlNote {
 				this.data = savedNote.response.data;
 
 				this.formatDates();
+				this.showTime();
 				
 				this.view.updateNote(this.data, 'saved');
 				break;
@@ -219,7 +251,7 @@ class CtrlNote {
 				this.view.updateNote(this.data, 'saved');
 				break;
 		}
-
+		this.state = 'saved';
 		this.bindEvents();
 	}
 

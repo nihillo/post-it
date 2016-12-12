@@ -46,12 +46,12 @@ gulp.task('html', function() {
 });
 
 // Move assets to dist
-// gulp.task('assets', function() {
-//     // Copy all HTML files to dist folder
-//     return gulp.src('./src/assets/**/*')
-//         .pipe(gulp.dest('./dist/assets'))
-//         .pipe( browserSync.stream() );
-// });
+gulp.task('assets', function() {
+    // Copy all HTML files to dist folder
+    return gulp.src('./src/view/assets/**/*')
+        .pipe(gulp.dest('./dist/assets'))
+        .pipe( browserSync.stream() );
+});
 
 // Move templates to dist
 // gulp.task('templates', function() {
@@ -91,5 +91,5 @@ gulp.task('clean', function() {
 
 // Default
 gulp.task('default', function() {
-  runSequence(['clean', 'html', 'css', 'js', /*'assets',*//* 'templates',*/ 'browser-sync', 'watch']);
+  runSequence(['clean', 'html', 'css', 'js', 'assets',/* 'templates',*/ 'browser-sync', 'watch']);
 });

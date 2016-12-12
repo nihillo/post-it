@@ -28,8 +28,7 @@ note = {
 				<textarea cols="30" rows="10" value="{{text}}" class="add-text" id="add-text-{{id}}">{{text}}</textarea>
 			</div>
 			<div class="note-footer">
-				<div class="date">Created: {{fDate}}</div>
-				<div class="date">Modified: {{fLastModified}}</div>
+				<div class="date">{{timeAgo}}</div>
 				<button class="" id="ok-{{id}}">
 					DONE
 				</button>
@@ -48,8 +47,7 @@ note = {
 				{{text}}
 			</div>
 			<div class="note-footer">
-				<div class="date">Created: {{fDate}}</div>
-				<div class="date">Modified: {{fLastModified}}</div>
+				<div class="date">{{timeAgo}}</div>
 				<button class="" id="edit-{{id}}">
 					EDIT
 				</button>

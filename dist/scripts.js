@@ -616,6 +616,7 @@
 
 			this.formatDates();
 
+			this.showTime();
 			this.view = new _view.ViewNote(this.state, this.data, container, skin);
 
 			this.bindEvents();
@@ -631,59 +632,98 @@
 				this.data.fLastModified = m.toLocaleDateString() + ' - ' + m.toLocaleTimeString();
 			}
 		}, {
+			key: 'timeAgo',
+			value: function timeAgo() {
+				var created = new Date(this.data.date);
+				var now = new Date();
+
+				var miliseconds = now.getTime() - created.getTime();
+
+				var minutes = Math.floor(miliseconds / 60000);
+
+				if (minutes < 60) {
+					return minutes + ' minutes ago';
+				}
+
+				var hours = Math.floor(minutes / 60);
+
+				if (hours < 24) {
+					return hours + ' hours ago';
+				}
+
+				var days = Math.floor(hours / 24);
+
+				if (days < 7) {
+					return days + ' days ago';
+				}
+
+				return created.toLocaleDateString();
+			}
+		}, {
+			key: 'showTime',
+			value: function showTime() {
+				var _this3 = this;
+
+				this.data.timeAgo = this.timeAgo();
+				window.setInterval(function () {
+					_this3.data.timeAgo = _this3.timeAgo();
+					_this3.view.updateNote(_this3.data, _this3.state);
+				}, 60000);
+			}
+		}, {
 			key: 'bindEvents',
 			value: function bindEvents() {
-				var _this3 = this;
+				var _this4 = this;
 
 				if (this.view.controls.edit) {
 					this.view.controls.edit.addEventListener('click', function () {
-						_this3.edit();
+						_this4.edit();
 					});
 				}
 
 				if (this.view.controls.delete) {
 					this.view.controls.delete.addEventListener('click', function () {
-						_this3.delete();
+						_this4.delete();
 					});
 				}
 
 				if (this.view.controls.ok) {
 					this.view.controls.ok.addEventListener('click', function () {
-						_this3.save();
+						_this4.save();
 					});
 				}
 
 				if (this.view.controls.cancel) {
 					this.view.controls.cancel.addEventListener('click', function () {
-						_this3.dismiss(_this3.state);
+						_this4.dismiss(_this4.state);
 					});
 				}
 
 				if (this.view.element.draggable) {
 					this.view.element.addEventListener('dragstart', function (event) {
 
-						_this3.dragStart(event);
+						_this4.dragStart(event);
 					});
 
 					this.view.element.addEventListener('dragenter', function () {
 
-						_this3.dragEnter();
+						_this4.dragEnter();
 					});
 
 					this.view.element.addEventListener('dragover', function (event) {
-						_this3.dragOver(event);
+						_this4.dragOver(event);
 					});
 
 					this.view.element.addEventListener('dragleave', function () {
-						_this3.dragLeave();
+						_this4.dragLeave();
 					});
 
 					this.view.element.addEventListener('drop', function () {
-						_this3.drop(event);
+						_this4.drop(event);
 					});
 
 					this.view.element.addEventListener('dragend', function () {
-						_this3.dragEnd();
+						_this4.dragEnd();
 					});
 				}
 			}
@@ -714,6 +754,7 @@
 						this.data = savedNote.response.data;
 
 						this.formatDates();
+						this.showTime();
 
 						this.view.updateNote(this.data, 'saved');
 						break;
@@ -724,7 +765,7 @@
 						this.view.updateNote(this.data, 'saved');
 						break;
 				}
-
+				this.state = 'saved';
 				this.bindEvents();
 			}
 		}, {
@@ -1065,8 +1106,8 @@
 
 	exports.note = note = {
 		new: "\n\t\t<div id=\"post-it-{{id}}\" class=\"mdl-card mdl-shadow--8dp post-it\">\n\t\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t\t<input type=\"text\" placeholder=\"Add title\" class=\"add-title\" id=\"add-title-{{id}}\"></input>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t\t<textarea cols=\"30\" rows=\"10\" placeholder=\"Add text\" class=\"add-text\" id=\"add-text-{{id}}\"></textarea>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"ok-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons mdl-color-text--green\">done</i>\n\t\t\t\t</button>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"cancel-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons mdl-color-text--red\">close</i>\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
-		edit: "\n\t\t<div id=\"post-it-{{id}}\" class=\"mdl-card mdl-shadow--8dp post-it\">\n\t\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t\t<input type=\"text\" value=\"{{title}}\" class=\"add-title\" id=\"add-title-{{id}}\"></input>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t\t<textarea cols=\"30\" rows=\"10\" value=\"{{text}}\" class=\"add-text\" id=\"add-text-{{id}}\">{{text}}</textarea>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t\t<div class=\"date\">Created: {{fDate}}</div>\n\t\t\t\t<div class=\"date\">Modified: {{fLastModified}}</div>\n\t\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"ok-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons mdl-color-text--green\">done</i>\n\t\t\t\t</button>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"cancel-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons mdl-color-text--red\">close</i>\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
-		fixed: "\n\t\t<div data-pos=\"{{position}}\" data-fixed=\"true\" id=\"post-it-{{id}}\" class=\"mdl-card mdl-shadow--2dp post-it\" draggable=\"true\">\n\t\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t\t<h2 class=\"mdl-card__title-text\">{{title}}</h2>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t\t{{text}}\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t\t<div class=\"date\">Created: {{fDate}}</div>\n\t\t\t\t<div class=\"date\">Modified: {{fLastModified}}</div>\n\t\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"edit-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons\">edit</i>\n\t\t\t\t</button>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"delete-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons\">delete</i>\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
+		edit: "\n\t\t<div id=\"post-it-{{id}}\" class=\"mdl-card mdl-shadow--8dp post-it\">\n\t\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t\t<input type=\"text\" value=\"{{title}}\" class=\"add-title\" id=\"add-title-{{id}}\"></input>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t\t<textarea cols=\"30\" rows=\"10\" value=\"{{text}}\" class=\"add-text\" id=\"add-text-{{id}}\">{{text}}</textarea>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t\t<div class=\"date\">{{timeAgo}}</div>\n\t\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"ok-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons mdl-color-text--green\">done</i>\n\t\t\t\t</button>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"cancel-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons mdl-color-text--red\">close</i>\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
+		fixed: "\n\t\t<div data-pos=\"{{position}}\" data-fixed=\"true\" id=\"post-it-{{id}}\" class=\"mdl-card mdl-shadow--2dp post-it\" draggable=\"true\">\n\t\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t\t<h2 class=\"mdl-card__title-text\">{{title}}</h2>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t\t{{text}}\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t\t<div class=\"date\">{{timeAgo}}</div>\n\t\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"edit-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons\">edit</i>\n\t\t\t\t</button>\n\t\t\t\t<button class=\"mdl-button mdl-js-button mdl-button--icon\" id=\"delete-{{id}}\">\n\t\t\t\t\t<i class=\"material-icons\">delete</i>\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
 		creator: "\n\t\t<div id=\"post-it-add\" class=\"mdl-card mdl-shadow--2dp post-it\">\n\t\t\t<div class=\"mdl-card__title mdl-card--expand\">\n\t\t\t\t<h2 class=\"mdl-card__title-text\"></h2>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__supporting-text\">\n\t\t\t\t<div class=\"mdl-button mdl-js-button mdl-button--icon add-icon-big\">\n\t\t\t\t\t<i class=\"material-icons\">add</i>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"mdl-card__actions mdl-card--border\">\n\t\t\t\t<div class=\"mdl-layout-spacer\"></div>\n\t\t\t\t<div class=\"add-action-text\">ADD NOTE</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
@@ -1083,8 +1124,8 @@
 
 	exports.note = note = {
 		new: "\n\t\t<div id=\"post-it-{{id}}\" class=\"note-brutalist\">\n\t\t\t<div class=\"note-header\">\n\t\t\t\t<input type=\"text\" placeholder=\"Add title\" class=\"add-title\" id=\"add-title-{{id}}\"></input>\n\t\t\t</div>\n\t\t\t<div class=\"note-body\">\n\t\t\t\t<textarea cols=\"30\" rows=\"10\" placeholder=\"Add text\" class=\"add-text\" id=\"add-text-{{id}}\"></textarea>\n\t\t\t</div>\n\t\t\t<div class=\"note-footer\">\n\t\t\t\t<button class=\"\" id=\"ok-{{id}}\">\n\t\t\t\t\tDONE\n\t\t\t\t</button>\n\t\t\t\t<button class=\"\" id=\"cancel-{{id}}\">\n\t\t\t\t\tCANCEL\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
-		edit: "\n\t\t<div id=\"post-it-{{id}}\" class=\"note-brutalist\">\n\t\t\t<div class=\"note-header\">\n\t\t\t\t<input type=\"text\" value=\"{{title}}\" class=\"add-title\" id=\"add-title-{{id}}\"></input>\n\t\t\t</div>\n\t\t\t<div class=\"note-body\">\n\t\t\t\t<textarea cols=\"30\" rows=\"10\" value=\"{{text}}\" class=\"add-text\" id=\"add-text-{{id}}\">{{text}}</textarea>\n\t\t\t</div>\n\t\t\t<div class=\"note-footer\">\n\t\t\t\t<div class=\"date\">Created: {{fDate}}</div>\n\t\t\t\t<div class=\"date\">Modified: {{fLastModified}}</div>\n\t\t\t\t<button class=\"\" id=\"ok-{{id}}\">\n\t\t\t\t\tDONE\n\t\t\t\t</button>\n\t\t\t\t<button class=\"\" id=\"cancel-{{id}}\">\n\t\t\t\t\tCANCEL\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
-		fixed: "\n\t\t<div data-pos=\"{{position}}\" data-fixed=\"true\" id=\"post-it-{{id}}\" class=\"note-brutalist\" draggable=\"true\">\n\t\t\t<div class=\"note-header\">\n\t\t\t\t<h2 class=\"\">{{title}}</h2>\n\t\t\t</div>\n\t\t\t<div class=\"note-body\">\n\t\t\t\t{{text}}\n\t\t\t</div>\n\t\t\t<div class=\"note-footer\">\n\t\t\t\t<div class=\"date\">Created: {{fDate}}</div>\n\t\t\t\t<div class=\"date\">Modified: {{fLastModified}}</div>\n\t\t\t\t<button class=\"\" id=\"edit-{{id}}\">\n\t\t\t\t\tEDIT\n\t\t\t\t</button>\n\t\t\t\t<button class=\"\" id=\"delete-{{id}}\">\n\t\t\t\t\tDELETE\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
+		edit: "\n\t\t<div id=\"post-it-{{id}}\" class=\"note-brutalist\">\n\t\t\t<div class=\"note-header\">\n\t\t\t\t<input type=\"text\" value=\"{{title}}\" class=\"add-title\" id=\"add-title-{{id}}\"></input>\n\t\t\t</div>\n\t\t\t<div class=\"note-body\">\n\t\t\t\t<textarea cols=\"30\" rows=\"10\" value=\"{{text}}\" class=\"add-text\" id=\"add-text-{{id}}\">{{text}}</textarea>\n\t\t\t</div>\n\t\t\t<div class=\"note-footer\">\n\t\t\t\t<div class=\"date\">{{timeAgo}}</div>\n\t\t\t\t<button class=\"\" id=\"ok-{{id}}\">\n\t\t\t\t\tDONE\n\t\t\t\t</button>\n\t\t\t\t<button class=\"\" id=\"cancel-{{id}}\">\n\t\t\t\t\tCANCEL\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
+		fixed: "\n\t\t<div data-pos=\"{{position}}\" data-fixed=\"true\" id=\"post-it-{{id}}\" class=\"note-brutalist\" draggable=\"true\">\n\t\t\t<div class=\"note-header\">\n\t\t\t\t<h2 class=\"\">{{title}}</h2>\n\t\t\t</div>\n\t\t\t<div class=\"note-body\">\n\t\t\t\t{{text}}\n\t\t\t</div>\n\t\t\t<div class=\"note-footer\">\n\t\t\t\t<div class=\"date\">{{timeAgo}}</div>\n\t\t\t\t<button class=\"\" id=\"edit-{{id}}\">\n\t\t\t\t\tEDIT\n\t\t\t\t</button>\n\t\t\t\t<button class=\"\" id=\"delete-{{id}}\">\n\t\t\t\t\tDELETE\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
 		creator: "\n\t\t<div id=\"post-it-add\" class=\"note-brutalist\">\n\t\t\t<div class=\"note-header\">\n\t\t\t\t<h2 class=\"\"></h2>\n\t\t\t</div>\n\t\t\t<div class=\"note-body\">\n\t\t\t\t<div class=\"\">\n\t\t\t\t\t+ ADD NOTE\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"note-footer\">\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
