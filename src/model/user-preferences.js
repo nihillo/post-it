@@ -1,10 +1,10 @@
-var config = require('../../config.js');
+var DEFAULT_SKIN = 'classy';
 
 export class UserPreferences {
 	constructor() {
 		var skin = this.load() ? this.load() : null;
 
-		this.skin = skin ? skin : config.DEFAULT_SKIN;
+		this.skin = skin ? skin : DEFAULT_SKIN;
 	}
 
 
