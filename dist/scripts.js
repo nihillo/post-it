@@ -668,6 +668,7 @@
 				window.setInterval(function () {
 					_this3.data.timeAgo = _this3.timeAgo();
 					_this3.view.updateNote(_this3.data, _this3.state);
+					_this3.bindEvents();
 				}, 60000);
 			}
 		}, {

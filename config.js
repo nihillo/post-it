@@ -1,6 +1,6 @@
 var testURL = 'dwec/projects/post-it/dist';
 
-var defaultSkin = 'brutalist';
+var defaultSkin = 'classy';
 
 module.exports = {
 	URL: testURL,

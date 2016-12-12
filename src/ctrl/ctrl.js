@@ -158,6 +158,7 @@ class CtrlNote {
 		window.setInterval(() => {
 			this.data.timeAgo = this.timeAgo();
 			this.view.updateNote(this.data, this.state);
+			this.bindEvents();
 		}, 60000);
 	}
 
