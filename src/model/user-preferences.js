@@ -2,13 +2,16 @@ var config = require('../../config.js');
 
 export class UserPreferences {
 	constructor() {
-		var preferences = this.load() ? this.load() : {};
+		var skin = this.load() ? this.load() : null;
 
-		this.skin = preferences.skin ? preferences.skin : config.DEFAULT_SKIN;
+		this.skin = skin ? skin : config.DEFAULT_SKIN;
 	}
 
 
-
+	setSkin(skin) {
+		this.skin = skin;
+		this.save();
+	}
 
 
 	get storage() {
@@ -20,10 +23,10 @@ export class UserPreferences {
 	}
 
 	load() {
-		return JSON.parse(this.storage.getItem('user-preferences'));
+		return JSON.parse(this.storage.getItem('skin'));
 	}
 
 	save() {
-		this.storage.setItem('user-preferences', JSON.stringify(this.notes));
+		this.storage.setItem('skin', JSON.stringify(this.skin));
 	}
 }

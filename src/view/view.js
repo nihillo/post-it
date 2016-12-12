@@ -1,15 +1,29 @@
 import {note as templateClassy} from './templates/classy.js';
-import {note as templateKitsch} from './templates/kitsch.js';
+import {note as templateBrutalist} from './templates/brutalist.js';
 
 var templates = {
 	'classy': templateClassy,
-	'kitsch': templateKitsch
+	'brutalist': templateBrutalist
 };
 
 export class View {
 	constructor(skin) {
 		this.container = document.getElementById('content');
 		this.template = templates[skin];	// HTML template
+		document.body.className = skin;
+		this.templateSwitch = this.getTemplateSwitch();
+	}
+
+	getTemplateSwitch() {
+		return {
+			classy: document.getElementById('set-skin-classy'),
+			brutalist: document.getElementById('set-skin-brutalist')
+		};
+	}
+
+	setSkin(skin) {
+		this.template = templates[skin];
+		document.body.className = skin;
 	}
 
 	appendCreator() {
@@ -39,6 +53,10 @@ export class View {
 		for (let i = 0; i < elements.length; i++) {
 			elements[i].style.opacity = '1';	
 		}
+	}
+
+	getFixedElements() {
+		return document.querySelectorAll('[data-fixed="true"]');
 	}
 }
 
@@ -111,6 +129,20 @@ export class ViewNote {
 		return auxParent.children[0];
 	}
 
+	getEditValues() {
+		var fields = {
+			title: document.getElementById('add-title-' + this.data.id),
+			text: document.getElementById('add-text-' + this.data.id)
+		};
+
+		var values = {
+			title: fields.title ? fields.title.value : null,
+			text: fields.text ? fields.text.value : null
+		};
+
+		return values;
+	}
+
 	insertInPlace(element, place='end') {
 		if (place == 'end') {
 			var add = document.getElementById('post-it-add');
@@ -141,5 +173,21 @@ export class ViewNote {
 		}
 
 		return null;
+	}
+
+	vanish(amount) {
+		this.element.style.opacity = amount;
+	}
+
+	unvanish() {
+		this.element.style.opacity = 1;
+	}
+
+	showCue() {
+		this.element.style.borderLeft = '3px dashed #88bdff';
+	}
+
+	hideCue() {
+		this.element.style.borderLeft = 0;
 	}
 }

@@ -68,4 +68,8 @@ export class ModelConnect {
 	static get userSkin() {
 		return PREFERENCES.skin;
 	}
+
+	static setSkin(skin) {
+		PREFERENCES.setSkin(skin);
+	}
 }

@@ -1,3 +1,5 @@
+/* CLASSY SKIN */
+
 .post-it.mdl-card {
 	width: 320px;
 	height: 320px;
@@ -109,4 +111,68 @@
 .date {
 	color: #aaa;
 	font-size: 0.8em;
+}
+
+
+
+
+/* KITSCH SKIN */
+body.brutalist {
+	background-image: url('./assets/corcho.jpg');
+	background-size: cover;
+}
+
+.note-brutalist {
+	font-family: monospace;
+
+	display: inline-block;
+	width: 350px;
+	height: 350px;
+	vertical-align: top;
+	margin: 15px;
+	padding: 15px;
+	border: 1px solid #ffbf00;
+
+	background: #ffbf00; /* For Safari 5.1 to 6.0 */ /* For Opera 11.1 to 12.0 */ /* For Firefox 3.6 to 15 */
+	background: linear-gradient(to bottom right, #ffbf00, #eee); /* Standard syntax */
+
+	/* Firefox */
+	/* Safari+Chrome */
+	/* Opera */
+	box-shadow: 2px 2px 4px rgba(33,33,33,.7);
+
+}
+
+.note-brutalist[draggable="true"] {
+	cursor: -webkit-grab;
+	cursor: grab;
+}
+
+.note-brutalist  h2 {
+	font-family: monospace;
+	font-size: 20px;
+	line-height: 1.1em;
+	margin-bottom: 1.1em;
+}
+
+.note-brutalist .add-title {
+	color: initial;
+}
+
+.note-header {
+	height: 20%;
+}
+
+.note-body {
+	height: 50%;
+}
+
+.note-footer {
+	height: 30%;
+}
+
+.note-brutalist button {
+	background: transparent;
+	border: 0;
+	cursor: pointer;
 }

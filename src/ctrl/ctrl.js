@@ -6,7 +6,18 @@ export class Controller {
 		this.skin = ModelConnect.userSkin;
 		this.view = new View(this.skin);
 		
+		this.bindEvents();
 		this.loadElements();
+	}
+
+	bindEvents() {
+		this.view.templateSwitch.classy.addEventListener('click', () => {
+			this.setSkin('classy');
+		});
+
+		this.view.templateSwitch.brutalist.addEventListener('click', () => {
+			this.setSkin('brutalist');
+		});
 	}
 
 	loadElements() {
@@ -52,7 +63,7 @@ export class Controller {
 	}
 
 	reorderNotesAfterDrop() {
-		var elements = document.querySelectorAll('[data-fixed="true"]');
+		var elements = this.view.getFixedElements();
 
 		for (let i = 0; i < elements.length; i++) {
 			let pos = i;
@@ -65,6 +76,12 @@ export class Controller {
 	}
 
 	
+	setSkin(skin) {
+		this.skin = skin;
+		ModelConnect.setSkin(skin);
+		this.view.setSkin(skin);
+		this.reloadElements();
+	}
 
 	create(title, text) {
 		return ModelConnect.create(title, text);
@@ -183,13 +200,12 @@ class CtrlNote {
 	save() {
 
 		var prevState = JSON.parse(JSON.stringify(this.view.state));
-		var title = document.getElementById('add-title-' + this.data.id);
-		var text = document.getElementById('add-text-' + this.data.id);
+		var values = this.view.getEditValues();
 
 		var savedNote;
 		switch(prevState) {
 			case 'new':
-				savedNote = this.parentCtrl.create(title.value, text.value);
+				savedNote = this.parentCtrl.create(values.title, values.text);
 				this.data = savedNote.response.data;
 
 				this.formatDates();
@@ -197,8 +213,7 @@ class CtrlNote {
 				this.view.updateNote(this.data, 'saved');
 				break;
 			case 'edit':
-				console.log('entering save edit');
-				savedNote = this.parentCtrl.update(this.data.id, title.value, text.value);
+				savedNote = this.parentCtrl.update(this.data.id, values.title, values.text);
 				this.data = savedNote.response.data;
 				
 				this.view.updateNote(this.data, 'saved');
@@ -223,7 +238,7 @@ class CtrlNote {
 
 
 	dragStart(event) {
-		this.view.element.style.opacity = 0.4;
+		this.view.vanish(0.4);
 
 		this.parentCtrl.dragSrc = this;
 
@@ -244,17 +259,15 @@ class CtrlNote {
 
 	dragEnter() {
 		if (this.parentCtrl.dragSrc != this) {
-			this.view.element.style.opacity = 0.6;
-			// this.view.element.style.left = '40px';
-			this.view.element.style.borderLeft = '3px dashed #88bdff';
+			this.view.vanish(0.6);
+			this.view.showCue();			
 		}
 	}
 
 	dragLeave() {
 		if (this.parentCtrl.dragSrc != this) {
-			this.view.element.style.opacity = 1;
-			// this.view.element.style.left = '0';
-			this.view.element.style.borderLeft = 0;
+			this.view.unvanish();
+			this.view.hideCue();
 		}
 	}
 

@@ -372,6 +372,11 @@
 				return MODEL.delete(id);
 			}
 		}, {
+			key: 'setSkin',
+			value: function setSkin(skin) {
+				PREFERENCES.setSkin(skin);
+			}
+		}, {
 			key: 'userSkin',
 			get: function get() {
 				return PREFERENCES.skin;
@@ -401,20 +406,26 @@
 		function UserPreferences() {
 			_classCallCheck(this, UserPreferences);
 
-			var preferences = this.load() ? this.load() : {};
+			var skin = this.load() ? this.load() : null;
 
-			this.skin = preferences.skin ? preferences.skin : config.DEFAULT_SKIN;
+			this.skin = skin ? skin : config.DEFAULT_SKIN;
 		}
 
 		_createClass(UserPreferences, [{
+			key: 'setSkin',
+			value: function setSkin(skin) {
+				this.skin = skin;
+				this.save();
+			}
+		}, {
 			key: 'load',
 			value: function load() {
-				return JSON.parse(this.storage.getItem('user-preferences'));
+				return JSON.parse(this.storage.getItem('skin'));
 			}
 		}, {
 			key: 'save',
 			value: function save() {
-				this.storage.setItem('user-preferences', JSON.stringify(this.notes));
+				this.storage.setItem('skin', JSON.stringify(this.skin));
 			}
 		}, {
 			key: 'storage',
@@ -438,7 +449,7 @@
 
 	var testURL = 'dwec/projects/post-it/dist';
 
-	var defaultSkin = 'classy';
+	var defaultSkin = 'brutalist';
 
 	module.exports = {
 		URL: testURL,
@@ -471,10 +482,24 @@
 			this.skin = _configmodel.ModelConnect.userSkin;
 			this.view = new _view.View(this.skin);
 
+			this.bindEvents();
 			this.loadElements();
 		}
 
 		_createClass(Controller, [{
+			key: 'bindEvents',
+			value: function bindEvents() {
+				var _this = this;
+
+				this.view.templateSwitch.classy.addEventListener('click', function () {
+					_this.setSkin('classy');
+				});
+
+				this.view.templateSwitch.brutalist.addEventListener('click', function () {
+					_this.setSkin('brutalist');
+				});
+			}
+		}, {
 			key: 'loadElements',
 			value: function loadElements() {
 				this.addSavedNotes();
@@ -503,12 +528,12 @@
 		}, {
 			key: 'addCreator',
 			value: function addCreator() {
-				var _this = this;
+				var _this2 = this;
 
 				this.view.appendCreator();
 
 				this.view.creator.addEventListener('click', function () {
-					_this.addNew();
+					_this2.addNew();
 				});
 			}
 		}, {
@@ -527,7 +552,7 @@
 		}, {
 			key: 'reorderNotesAfterDrop',
 			value: function reorderNotesAfterDrop() {
-				var elements = document.querySelectorAll('[data-fixed="true"]');
+				var elements = this.view.getFixedElements();
 
 				for (var i = 0; i < elements.length; i++) {
 					var pos = i;
@@ -536,6 +561,14 @@
 					this.update(id, null, null, pos);
 				}
 
+				this.reloadElements();
+			}
+		}, {
+			key: 'setSkin',
+			value: function setSkin(skin) {
+				this.skin = skin;
+				_configmodel.ModelConnect.setSkin(skin);
+				this.view.setSkin(skin);
 				this.reloadElements();
 			}
 		}, {
@@ -600,57 +633,57 @@
 		}, {
 			key: 'bindEvents',
 			value: function bindEvents() {
-				var _this2 = this;
+				var _this3 = this;
 
 				if (this.view.controls.edit) {
 					this.view.controls.edit.addEventListener('click', function () {
-						_this2.edit();
+						_this3.edit();
 					});
 				}
 
 				if (this.view.controls.delete) {
 					this.view.controls.delete.addEventListener('click', function () {
-						_this2.delete();
+						_this3.delete();
 					});
 				}
 
 				if (this.view.controls.ok) {
 					this.view.controls.ok.addEventListener('click', function () {
-						_this2.save();
+						_this3.save();
 					});
 				}
 
 				if (this.view.controls.cancel) {
 					this.view.controls.cancel.addEventListener('click', function () {
-						_this2.dismiss(_this2.state);
+						_this3.dismiss(_this3.state);
 					});
 				}
 
 				if (this.view.element.draggable) {
 					this.view.element.addEventListener('dragstart', function (event) {
 
-						_this2.dragStart(event);
+						_this3.dragStart(event);
 					});
 
 					this.view.element.addEventListener('dragenter', function () {
 
-						_this2.dragEnter();
+						_this3.dragEnter();
 					});
 
 					this.view.element.addEventListener('dragover', function (event) {
-						_this2.dragOver(event);
+						_this3.dragOver(event);
 					});
 
 					this.view.element.addEventListener('dragleave', function () {
-						_this2.dragLeave();
+						_this3.dragLeave();
 					});
 
 					this.view.element.addEventListener('drop', function () {
-						_this2.drop(event);
+						_this3.drop(event);
 					});
 
 					this.view.element.addEventListener('dragend', function () {
-						_this2.dragEnd();
+						_this3.dragEnd();
 					});
 				}
 			}
@@ -672,13 +705,12 @@
 			value: function save() {
 
 				var prevState = JSON.parse(JSON.stringify(this.view.state));
-				var title = document.getElementById('add-title-' + this.data.id);
-				var text = document.getElementById('add-text-' + this.data.id);
+				var values = this.view.getEditValues();
 
 				var savedNote;
 				switch (prevState) {
 					case 'new':
-						savedNote = this.parentCtrl.create(title.value, text.value);
+						savedNote = this.parentCtrl.create(values.title, values.text);
 						this.data = savedNote.response.data;
 
 						this.formatDates();
@@ -686,8 +718,7 @@
 						this.view.updateNote(this.data, 'saved');
 						break;
 					case 'edit':
-						console.log('entering save edit');
-						savedNote = this.parentCtrl.update(this.data.id, title.value, text.value);
+						savedNote = this.parentCtrl.update(this.data.id, values.title, values.text);
 						this.data = savedNote.response.data;
 
 						this.view.updateNote(this.data, 'saved');
@@ -712,7 +743,7 @@
 		}, {
 			key: 'dragStart',
 			value: function dragStart(event) {
-				this.view.element.style.opacity = 0.4;
+				this.view.vanish(0.4);
 
 				this.parentCtrl.dragSrc = this;
 
@@ -735,18 +766,16 @@
 			key: 'dragEnter',
 			value: function dragEnter() {
 				if (this.parentCtrl.dragSrc != this) {
-					this.view.element.style.opacity = 0.6;
-					// this.view.element.style.left = '40px';
-					this.view.element.style.borderLeft = '3px dashed #88bdff';
+					this.view.vanish(0.6);
+					this.view.showCue();
 				}
 			}
 		}, {
 			key: 'dragLeave',
 			value: function dragLeave() {
 				if (this.parentCtrl.dragSrc != this) {
-					this.view.element.style.opacity = 1;
-					// this.view.element.style.left = '0';
-					this.view.element.style.borderLeft = 0;
+					this.view.unvanish();
+					this.view.hideCue();
 				}
 			}
 		}, {
@@ -793,13 +822,13 @@
 
 	var _classy = __webpack_require__(8);
 
-	var _kitsch = __webpack_require__(9);
+	var _brutalist = __webpack_require__(9);
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var templates = {
 		'classy': _classy.note,
-		'kitsch': _kitsch.note
+		'brutalist': _brutalist.note
 	};
 
 	var View = exports.View = function () {
@@ -808,9 +837,25 @@
 
 			this.container = document.getElementById('content');
 			this.template = templates[skin]; // HTML template
+			document.body.className = skin;
+			this.templateSwitch = this.getTemplateSwitch();
 		}
 
 		_createClass(View, [{
+			key: 'getTemplateSwitch',
+			value: function getTemplateSwitch() {
+				return {
+					classy: document.getElementById('set-skin-classy'),
+					brutalist: document.getElementById('set-skin-brutalist')
+				};
+			}
+		}, {
+			key: 'setSkin',
+			value: function setSkin(skin) {
+				this.template = templates[skin];
+				document.body.className = skin;
+			}
+		}, {
 			key: 'appendCreator',
 			value: function appendCreator() {
 				var template = this.template.creator;
@@ -843,6 +888,11 @@
 				for (var i = 0; i < elements.length; i++) {
 					elements[i].style.opacity = '1';
 				}
+			}
+		}, {
+			key: 'getFixedElements',
+			value: function getFixedElements() {
+				return document.querySelectorAll('[data-fixed="true"]');
 			}
 		}]);
 
@@ -928,6 +978,21 @@
 				return auxParent.children[0];
 			}
 		}, {
+			key: 'getEditValues',
+			value: function getEditValues() {
+				var fields = {
+					title: document.getElementById('add-title-' + this.data.id),
+					text: document.getElementById('add-text-' + this.data.id)
+				};
+
+				var values = {
+					title: fields.title ? fields.title.value : null,
+					text: fields.text ? fields.text.value : null
+				};
+
+				return values;
+			}
+		}, {
 			key: 'insertInPlace',
 			value: function insertInPlace(element) {
 				var place = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'end';
@@ -962,6 +1027,26 @@
 
 				return null;
 			}
+		}, {
+			key: 'vanish',
+			value: function vanish(amount) {
+				this.element.style.opacity = amount;
+			}
+		}, {
+			key: 'unvanish',
+			value: function unvanish() {
+				this.element.style.opacity = 1;
+			}
+		}, {
+			key: 'showCue',
+			value: function showCue() {
+				this.element.style.borderLeft = '3px dashed #88bdff';
+			}
+		}, {
+			key: 'hideCue',
+			value: function hideCue() {
+				this.element.style.borderLeft = 0;
+			}
 		}]);
 
 		return ViewNote;
@@ -994,7 +1079,14 @@
 	Object.defineProperty(exports, "__esModule", {
 		value: true
 	});
-	var note = exports.note = "\n\t<h1>{{title}}</h1>\n";
+	var note = exports.note = undefined;
+
+	exports.note = note = {
+		new: "\n\t\t<div id=\"post-it-{{id}}\" class=\"note-brutalist\">\n\t\t\t<div class=\"note-header\">\n\t\t\t\t<input type=\"text\" placeholder=\"Add title\" class=\"add-title\" id=\"add-title-{{id}}\"></input>\n\t\t\t</div>\n\t\t\t<div class=\"note-body\">\n\t\t\t\t<textarea cols=\"30\" rows=\"10\" placeholder=\"Add text\" class=\"add-text\" id=\"add-text-{{id}}\"></textarea>\n\t\t\t</div>\n\t\t\t<div class=\"note-footer\">\n\t\t\t\t<button class=\"\" id=\"ok-{{id}}\">\n\t\t\t\t\tDONE\n\t\t\t\t</button>\n\t\t\t\t<button class=\"\" id=\"cancel-{{id}}\">\n\t\t\t\t\tCANCEL\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
+		edit: "\n\t\t<div id=\"post-it-{{id}}\" class=\"note-brutalist\">\n\t\t\t<div class=\"note-header\">\n\t\t\t\t<input type=\"text\" value=\"{{title}}\" class=\"add-title\" id=\"add-title-{{id}}\"></input>\n\t\t\t</div>\n\t\t\t<div class=\"note-body\">\n\t\t\t\t<textarea cols=\"30\" rows=\"10\" value=\"{{text}}\" class=\"add-text\" id=\"add-text-{{id}}\">{{text}}</textarea>\n\t\t\t</div>\n\t\t\t<div class=\"note-footer\">\n\t\t\t\t<div class=\"date\">Created: {{fDate}}</div>\n\t\t\t\t<div class=\"date\">Modified: {{fLastModified}}</div>\n\t\t\t\t<button class=\"\" id=\"ok-{{id}}\">\n\t\t\t\t\tDONE\n\t\t\t\t</button>\n\t\t\t\t<button class=\"\" id=\"cancel-{{id}}\">\n\t\t\t\t\tCANCEL\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
+		fixed: "\n\t\t<div data-pos=\"{{position}}\" data-fixed=\"true\" id=\"post-it-{{id}}\" class=\"note-brutalist\" draggable=\"true\">\n\t\t\t<div class=\"note-header\">\n\t\t\t\t<h2 class=\"\">{{title}}</h2>\n\t\t\t</div>\n\t\t\t<div class=\"note-body\">\n\t\t\t\t{{text}}\n\t\t\t</div>\n\t\t\t<div class=\"note-footer\">\n\t\t\t\t<div class=\"date\">Created: {{fDate}}</div>\n\t\t\t\t<div class=\"date\">Modified: {{fLastModified}}</div>\n\t\t\t\t<button class=\"\" id=\"edit-{{id}}\">\n\t\t\t\t\tEDIT\n\t\t\t\t</button>\n\t\t\t\t<button class=\"\" id=\"delete-{{id}}\">\n\t\t\t\t\tDELETE\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</div>\n\t",
+		creator: "\n\t\t<div id=\"post-it-add\" class=\"note-brutalist\">\n\t\t\t<div class=\"note-header\">\n\t\t\t\t<h2 class=\"\"></h2>\n\t\t\t</div>\n\t\t\t<div class=\"note-body\">\n\t\t\t\t<div class=\"\">\n\t\t\t\t\t+ ADD NOTE\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"note-footer\">\n\t\t\t</div>\n\t\t</div>\n\t"
+	};
 
 /***/ },
 /* 10 */
