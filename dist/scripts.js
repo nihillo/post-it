@@ -49,9 +49,9 @@
 	__webpack_require__(1);
 	__webpack_require__(2);
 	__webpack_require__(3);
+	__webpack_require__(5);
 	__webpack_require__(6);
-	__webpack_require__(7);
-	__webpack_require__(10);
+	__webpack_require__(9);
 
 /***/ },
 /* 1 */
@@ -388,7 +388,7 @@
 
 /***/ },
 /* 4 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
 	'use strict';
 
@@ -400,7 +400,7 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var config = __webpack_require__(5);
+	var DEFAULT_SKIN = 'classy';
 
 	var UserPreferences = exports.UserPreferences = function () {
 		function UserPreferences() {
@@ -408,7 +408,7 @@
 
 			var skin = this.load() ? this.load() : null;
 
-			this.skin = skin ? skin : config.DEFAULT_SKIN;
+			this.skin = skin ? skin : DEFAULT_SKIN;
 		}
 
 		_createClass(UserPreferences, [{
@@ -443,21 +443,6 @@
 
 /***/ },
 /* 5 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	var testURL = 'dwec/projects/post-it/dist';
-
-	var defaultSkin = 'brutalist';
-
-	module.exports = {
-		URL: testURL,
-		DEFAULT_SKIN: defaultSkin
-	};
-
-/***/ },
-/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -471,7 +456,7 @@
 
 	var _configmodel = __webpack_require__(3);
 
-	var _view = __webpack_require__(7);
+	var _view = __webpack_require__(6);
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -850,7 +835,7 @@
 	}();
 
 /***/ },
-/* 7 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -862,9 +847,9 @@
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	var _classy = __webpack_require__(8);
+	var _classy = __webpack_require__(7);
 
-	var _brutalist = __webpack_require__(9);
+	var _brutalist = __webpack_require__(8);
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -1095,7 +1080,7 @@
 	}();
 
 /***/ },
-/* 8 */
+/* 7 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -1113,7 +1098,7 @@
 	};
 
 /***/ },
-/* 9 */
+/* 8 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -1131,12 +1116,12 @@
 	};
 
 /***/ },
-/* 10 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var _ctrl = __webpack_require__(6);
+	var _ctrl = __webpack_require__(5);
 
 	var ctrl;
 
